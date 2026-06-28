@@ -9,6 +9,10 @@
     <input type="hidden" name="keyword" value="{{ keyword }}">
     <input type="hidden" name="project" value="{{ project.pk }}">
     <input type="hidden" name="title" id="selected-title" value="">
+    <input type="hidden" name="length" value="{{ opt_length }}">
+    <input type="hidden" name="writing_style" value="{{ opt_writing_style }}">
+    <input type="hidden" name="secondary_keywords" value="{{ opt_secondary_keywords }}">
+    <input type="hidden" name="faq" value="{{ opt_faq }}">
 
     <div style="display:flex; flex-direction:column; gap:0.5rem;">
       {% for title in titles %}
@@ -31,19 +35,3 @@
     </div>
   </form>
 </div>
-
-<script>
-function selectTitle(btn, title) {
-  document.querySelectorAll('#title-form button[type="button"]').forEach(b => {
-    b.classList.remove('selected');
-    b.style.borderColor = '#374151';
-    b.style.background = '#1f2937';
-  });
-  btn.classList.add('selected');
-  btn.style.borderColor = '#7c3aed';
-  btn.style.background = 'rgba(124,58,237,0.15)';
-  document.getElementById('selected-title').value = title;
-  document.getElementById('selected-title-display').textContent = title;
-  document.getElementById('selected-info').style.display = 'block';
-}
-</script>

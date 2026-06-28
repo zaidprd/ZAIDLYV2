@@ -47,6 +47,10 @@ def generate_titles(request):
         'titles': titles,
         'keyword': keyword,
         'project': project,
+        'opt_length': request.POST.get('length', ''),
+        'opt_writing_style': request.POST.get('writing_style', ''),
+        'opt_secondary_keywords': request.POST.get('secondary_keywords', ''),
+        'opt_faq': request.POST.get('faq', '1'),
     })
 
 
@@ -62,12 +66,15 @@ def generate_start(request):
 
     project = get_object_or_404(Project, pk=project_id, user=request.user)
 
+    options = _collect_options(request)
+
     job = QueueJob.objects.create(
         user=request.user,
         project=project,
         job_type=QueueJob.TYPE_GENERATE,
         keyword=keyword,
         title=title,
+        options=options,
         status=QueueJob.PENDING,
     )
 
@@ -86,6 +93,26 @@ def generate_result(request, pk):
 def generate_result_poll(request, pk):
     job = get_object_or_404(QueueJob, pk=pk, user=request.user)
     return render(request, 'generator/partials/result_status.html', {'job': job})
+
+
+def _collect_options(request):
+    """Per-generation overrides from the form. Empty -> fall back to project defaults."""
+    def csv(name):
+        raw = request.POST.get(name, '').strip()
+        return [s.strip() for s in raw.split(',') if s.strip()]
+
+    options = {}
+    length = request.POST.get('length', '').strip()
+    if length.isdigit():
+        options['length'] = int(length)
+    style = request.POST.get('writing_style', '').strip()
+    if style:
+        options['writing_style'] = style
+    secondary = csv('secondary_keywords')
+    if secondary:
+        options['secondary_keywords'] = secondary
+    options['faq'] = bool(request.POST.get('faq', '').strip())
+    return options
 
 
 def _parse_titles(raw):

@@ -36,6 +36,44 @@
                maxlength="300">
       </div>
 
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+        <div>
+          <label class="label">Panjang Artikel</label>
+          <select id="opt-length" class="input">
+            <option value="">Default project</option>
+            <option value="1000">1000 kata</option>
+            <option value="1500">1500 kata</option>
+            <option value="2000">2000 kata</option>
+            <option value="3000">3000 kata</option>
+            <option value="5000">5000+ kata</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Writing Style</label>
+          <select id="opt-style" class="input">
+            <option value="">Default project</option>
+            <option value="blog">Blog</option>
+            <option value="review">Review</option>
+            <option value="tutorial">Tutorial</option>
+            <option value="listicle">Listicle</option>
+            <option value="evergreen">Evergreen</option>
+            <option value="news">News</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="label">Secondary Keyword (opsional, pisah koma)</label>
+        <input type="text" id="opt-secondary" class="input"
+               placeholder="Contoh: jualan online, marketplace" maxlength="300">
+      </div>
+
+      <div style="display:flex; align-items:center; gap:0.5rem;">
+        <input type="checkbox" id="opt-faq" checked
+               style="width:1rem; height:1rem; accent-color:#7c3aed;">
+        <label for="opt-faq" style="font-size:0.875rem; color:#e5e7eb;">Sertakan bagian FAQ + Schema</label>
+      </div>
+
       <button id="generate-btn" type="button"
               style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.625rem 1.25rem; background:#7c3aed; color:#fff; border:none; border-radius:0.5rem; font-size:0.875rem; font-weight:500; cursor:pointer;"
               onclick="generateTitles()">
@@ -73,6 +111,10 @@ function generateTitles() {
   const formData = new FormData();
   formData.append('keyword', keyword);
   formData.append('project', project);
+  formData.append('length', document.getElementById('opt-length').value);
+  formData.append('writing_style', document.getElementById('opt-style').value);
+  formData.append('secondary_keywords', document.getElementById('opt-secondary').value);
+  formData.append('faq', document.getElementById('opt-faq').checked ? '1' : '');
   formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
 
   fetch('{% url "generate_titles" %}', {
@@ -97,5 +139,22 @@ function generateTitles() {
 document.getElementById('keyword-input').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') generateTitles();
 });
+
+// Dipanggil oleh tombol judul di partial title_list.html.
+// Harus didefinisikan di sini (bukan di partial), karena <script> yang
+// disisipkan lewat innerHTML tidak dieksekusi oleh browser.
+function selectTitle(btn, title) {
+  document.querySelectorAll('#title-form button[type="button"]').forEach(b => {
+    b.classList.remove('selected');
+    b.style.borderColor = '#374151';
+    b.style.background = '#1f2937';
+  });
+  btn.classList.add('selected');
+  btn.style.borderColor = '#7c3aed';
+  btn.style.background = 'rgba(124,58,237,0.15)';
+  document.getElementById('selected-title').value = title;
+  document.getElementById('selected-title-display').textContent = title;
+  document.getElementById('selected-info').style.display = 'block';
+}
 </script>
 {% endblock %}

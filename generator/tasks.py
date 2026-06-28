@@ -1,7 +1,15 @@
-import re
-from ai_service import generate_text, generate_image
-from .prompts import titles_prompt, article_prompt, image_prompt
+from decouple import config
+
+from ai_service import generate, generate_image
+from ai_service import pricing
+from .prompt_builder import build_titles_messages, build_article_messages, article_spec_from_project
+from .parsing import parse_article_output, slugify, count_words
 from .seo import validate
+
+
+def _max_tokens_for(length):
+    """Rough output-token budget for a target word count, capped to a safe ceiling."""
+    return min(int(length * 2.2) + 800, 16000)
 
 
 def run_generate_article(job_id):
@@ -24,47 +32,82 @@ def run_generate_article(job_id):
 
     try:
         project = job.project
+        opts = job.options or {}
 
         # Bulk mode: auto-generate title from keyword
         if job.auto_title or not job.title:
-            messages = titles_prompt(
-                keyword=job.keyword,
+            t_messages = build_titles_messages(
+                job.keyword,
                 language=project.language,
                 tone=project.get_tone_display(),
                 target_audience=project.target_audience,
+                writing_style=opts.get('writing_style') or project.writing_style,
             )
-            raw_titles = generate_text(messages, model=project.ai_model, max_tokens=600, temperature=0.7)
-            titles = _parse_titles(raw_titles)
+            titles = _parse_titles(generate(t_messages, model=project.ai_model, max_tokens=600, temperature=0.7).text)
             job.title = titles[0] if titles else job.keyword
             job.save(update_fields=['title', 'updated_at'])
 
-        # Generate article
-        messages = article_prompt(
+        # Build article prompt from project defaults + per-generation overrides
+        spec = article_spec_from_project(
+            project,
             keyword=job.keyword,
             title=job.title,
-            language=project.language,
-            tone=project.get_tone_display(),
-            target_audience=project.target_audience,
+            length=opts.get('length'),
+            writing_style=opts.get('writing_style'),
+            secondary_keywords=opts.get('secondary_keywords'),
+            lsi_keywords=opts.get('lsi_keywords'),
+            faq=opts.get('faq', True),
+            internal_links=opts.get('internal_links'),
+            external_links=opts.get('external_links'),
         )
-        raw = generate_text(messages, model=project.ai_model, max_tokens=4000)
-        meta_description, slug, article_html = _parse_article_output(raw)
+        messages = build_article_messages(spec)
+        gen = generate(messages, model=project.ai_model, max_tokens=_max_tokens_for(spec.length))
+        sections = parse_article_output(gen.text)
 
-        # Generate featured image (skip silently if not configured)
+        article_html = sections['ARTICLE_HTML']
+        meta_description = sections['META_DESCRIPTION']
+        meta_title = sections['META_TITLE'] or job.title
+        slug = sections['SLUG'] or slugify(job.title)
+        img_prompt = sections['IMAGE_PROMPT']
+        image_alt = sections['IMAGE_ALT'] or job.title
+        schema_jsonld = sections['SCHEMA_JSONLD']
+
+        # Generate featured image (skip silently if not configured) — Module 8 extends upload+alt
         img_url = ''
+        image_model = config('AI_IMAGE_MODEL', default='')
         try:
-            prompt = image_prompt(job.keyword, job.title)
-            img_url = generate_image(prompt)
+            img_url = generate_image(img_prompt or job.title)
         except Exception:
             pass
 
         # SEO validation
         seo = validate(job.keyword, job.title, article_html, meta_description)
 
+        # Cost / HPP telemetry
+        cost_text = pricing.estimate_text_cost(gen.model, gen.tokens_in, gen.tokens_out)
+        cost_image = pricing.estimate_image_cost(image_model) if img_url else 0.0
+        job.model_used = gen.model
+        job.tokens_in = gen.tokens_in
+        job.tokens_out = gen.tokens_out
+        job.cost_text_usd = round(cost_text, 6)
+        job.cost_image_usd = round(cost_image, 6)
+        job.cost_total_usd = round(cost_text + cost_image, 6)
+        job.duration_ms = gen.duration_ms
+        job.word_count = count_words(article_html)
+        job.gen_fallback_used = gen.fallback_used
+        job.save(update_fields=[
+            'model_used', 'tokens_in', 'tokens_out', 'cost_text_usd', 'cost_image_usd',
+            'cost_total_usd', 'duration_ms', 'word_count', 'gen_fallback_used', 'updated_at',
+        ])
+
         result = {
+            'meta_title': meta_title,
             'article_html': article_html,
             'meta_description': meta_description,
-            'slug': slug or _make_slug(job.title),
+            'slug': slug,
             'image_url': img_url,
+            'image_alt': image_alt,
+            'schema_jsonld': schema_jsonld,
             'seo': seo,
         }
         job.mark_done(result)
@@ -135,26 +178,3 @@ def _parse_titles(raw):
         if clean:
             titles.append(clean)
     return titles[:15]
-
-
-def _parse_article_output(raw):
-    lines = raw.strip().split('\n')
-    meta_description = ''
-    slug = ''
-    article_lines = []
-    for line in lines:
-        if line.startswith('META:'):
-            meta_description = line[5:].strip()
-        elif line.startswith('SLUG:'):
-            slug = line[5:].strip()
-        else:
-            article_lines.append(line)
-    return meta_description, slug, '\n'.join(article_lines).strip()
-
-
-def _make_slug(title):
-    slug = title.lower()
-    slug = re.sub(r'[^\w\s-]', '', slug)
-    slug = re.sub(r'[\s_]+', '-', slug)
-    slug = slug.strip('-')
-    return slug[:80]
