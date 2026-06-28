@@ -37,6 +37,37 @@
         {{ form.target_audience }}
       </div>
 
+      <div class="grid grid-cols-2 gap-4">
+        <div class="form-group">
+          <label class="label">Writing Style</label>
+          <select name="writing_style" class="input">
+            {% for val, label in form.fields.writing_style.choices %}
+            <option value="{{ val }}" {% if form.writing_style.value|stringformat:'s' == val|stringformat:'s' %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="label">Panjang Default</label>
+          <select name="default_length" class="input">
+            {% for val, label in form.fields.default_length.choices %}
+            <option value="{{ val }}" {% if form.default_length.value|stringformat:'s' == val|stringformat:'s' %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="label">Brand Voice</label>
+        {{ form.brand_voice }}
+        <p class="text-xs text-gray-600 mt-1">{{ form.fields.brand_voice.help_text }}</p>
+      </div>
+
+      <div class="form-group">
+        <label class="label">CTA Default</label>
+        {{ form.default_cta }}
+        <p class="text-xs text-gray-600 mt-1">{{ form.fields.default_cta.help_text }}</p>
+      </div>
+
       <div class="form-group">
         <label class="label">Model AI</label>
         {{ form.ai_model }}

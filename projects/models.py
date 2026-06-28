@@ -6,9 +6,26 @@ class Project(models.Model):
     LANGUAGE_CHOICES = [('id', 'Bahasa Indonesia'), ('en', 'English')]
     TONE_CHOICES = [
         ('formal', 'Formal'),
+        ('professional', 'Profesional'),
         ('casual', 'Santai'),
+        ('educational', 'Edukatif'),
         ('persuasive', 'Persuasif'),
         ('informative', 'Informatif'),
+    ]
+    WRITING_STYLE_CHOICES = [
+        ('blog', 'Blog'),
+        ('review', 'Review'),
+        ('tutorial', 'Tutorial'),
+        ('listicle', 'Listicle'),
+        ('evergreen', 'Evergreen'),
+        ('news', 'News'),
+    ]
+    LENGTH_CHOICES = [
+        (1000, '1000 kata'),
+        (1500, '1500 kata'),
+        (2000, '2000 kata'),
+        (3000, '3000 kata'),
+        (5000, '5000+ kata'),
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='projects')
@@ -16,6 +33,10 @@ class Project(models.Model):
     language = models.CharField(max_length=10, choices=LANGUAGE_CHOICES, default='id')
     target_audience = models.CharField(max_length=500, blank=True)
     tone = models.CharField(max_length=50, choices=TONE_CHOICES, default='informative')
+    writing_style = models.CharField(max_length=20, choices=WRITING_STYLE_CHOICES, default='blog')
+    default_length = models.PositiveIntegerField(choices=LENGTH_CHOICES, default=1500)
+    brand_voice = models.TextField(blank=True, help_text='Karakter/gaya brand yang harus tercermin di artikel.')
+    default_cta = models.CharField(max_length=300, blank=True, help_text='Call-to-action default di akhir artikel.')
     ai_model = models.CharField(max_length=100, default='gpt-4o-mini')
     auto_publish = models.BooleanField(default=False)
     schedule_times = models.CharField(
