@@ -7,7 +7,7 @@ from django_q.tasks import async_task
 from ai_service import generate_text
 from projects.models import Project
 from queue_manager.models import QueueJob
-from .prompts import titles_prompt
+from .prompt_builder import build_titles_messages
 
 
 @login_required
@@ -31,11 +31,12 @@ def generate_titles(request):
         return HttpResponse('<p class="text-red-400 text-sm">Project tidak ditemukan.</p>')
 
     try:
-        messages = titles_prompt(
-            keyword=keyword,
+        messages = build_titles_messages(
+            keyword,
             language=project.language,
             tone=project.get_tone_display(),
             target_audience=project.target_audience,
+            writing_style=project.writing_style,
         )
         raw = generate_text(messages, model=project.ai_model, max_tokens=800, temperature=0.8)
         titles = _parse_titles(raw)
