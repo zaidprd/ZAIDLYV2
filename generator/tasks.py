@@ -1,5 +1,5 @@
 import re
-from .ai import call_ai, generate_image
+from ai_service import generate_text, generate_image
 from .prompts import titles_prompt, article_prompt, image_prompt
 from .seo import validate
 
@@ -33,7 +33,7 @@ def run_generate_article(job_id):
                 tone=project.get_tone_display(),
                 target_audience=project.target_audience,
             )
-            raw_titles = call_ai(messages, model=project.ai_model, max_tokens=600, temperature=0.7)
+            raw_titles = generate_text(messages, model=project.ai_model, max_tokens=600, temperature=0.7)
             titles = _parse_titles(raw_titles)
             job.title = titles[0] if titles else job.keyword
             job.save(update_fields=['title', 'updated_at'])
@@ -46,7 +46,7 @@ def run_generate_article(job_id):
             tone=project.get_tone_display(),
             target_audience=project.target_audience,
         )
-        raw = call_ai(messages, model=project.ai_model, max_tokens=4000)
+        raw = generate_text(messages, model=project.ai_model, max_tokens=4000)
         meta_description, slug, article_html = _parse_article_output(raw)
 
         # Generate featured image (skip silently if not configured)

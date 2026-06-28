@@ -4,9 +4,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 from django_q.tasks import async_task
 
+from ai_service import generate_text
 from projects.models import Project
 from queue_manager.models import QueueJob
-from .ai import call_ai
 from .prompts import titles_prompt
 
 
@@ -37,7 +37,7 @@ def generate_titles(request):
             tone=project.get_tone_display(),
             target_audience=project.target_audience,
         )
-        raw = call_ai(messages, model=project.ai_model, max_tokens=800, temperature=0.8)
+        raw = generate_text(messages, model=project.ai_model, max_tokens=800, temperature=0.8)
         titles = _parse_titles(raw)
     except Exception as e:
         return HttpResponse(f'<p class="text-red-400 text-sm">Gagal generate judul: {e}</p>')
