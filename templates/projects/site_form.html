@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Tambah Site — SEO.Zaidly{% endblock %}
+{% block page_title %}Tambah WordPress Site{% endblock %}
+{% block content %}
+<div class="max-w-xl">
+  <div class="card p-6">
+    <p class="text-xs text-gray-500 mb-5">Project: <span class="text-white">{{ project.name }}</span></p>
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="form-group">
+        <label class="label">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+        {{ field }}
+        {% if field.help_text %}<p class="text-xs text-gray-600 mt-1">{{ field.help_text }}</p>{% endif %}
+        {% if field.errors %}<p class="text-xs text-red-400 mt-1">{{ field.errors.0 }}</p>{% endif %}
+      </div>
+      {% endfor %}
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary">Simpan</button>
+        <a href="{% url 'project_detail' project.pk %}" class="btn-secondary">Batal</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

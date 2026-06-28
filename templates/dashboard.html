@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — SEO.Zaidly{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<div class="max-w-4xl space-y-6">
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    {% with stats=total_jobs|default:0 %}
+    <div class="card p-4">
+      <p class="text-xs text-gray-500 mb-1">Total Jobs</p>
+      <p class="text-2xl font-semibold text-white">{{ total_jobs }}</p>
+    </div>
+    <div class="card p-4">
+      <p class="text-xs text-gray-500 mb-1">Published</p>
+      <p class="text-2xl font-semibold text-emerald-400">{{ published }}</p>
+    </div>
+    <div class="card p-4">
+      <p class="text-xs text-gray-500 mb-1">Antrian</p>
+      <p class="text-2xl font-semibold text-blue-400">{{ pending }}</p>
+    </div>
+    <div class="card p-4">
+      <p class="text-xs text-gray-500 mb-1">Gagal</p>
+      <p class="text-2xl font-semibold text-red-400">{{ failed }}</p>
+    </div>
+    {% endwith %}
+  </div>
+
+  <!-- Quick actions -->
+  <div class="grid grid-cols-3 gap-3">
+    <a href="{% url 'generate_new' %}" class="card p-5 hover:border-violet-500/50 transition-colors group">
+      <div class="w-9 h-9 rounded-lg bg-violet-600/20 flex items-center justify-center mb-3 group-hover:bg-violet-600/30 transition-colors">
+        <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      <p class="text-sm font-medium text-white">Generate Artikel</p>
+      <p class="text-xs text-gray-500 mt-0.5">Keyword → Judul → Artikel SEO</p>
+    </a>
+    <a href="{% url 'project_new' %}" class="card p-5 hover:border-violet-500/50 transition-colors group">
+      <div class="w-9 h-9 rounded-lg bg-gray-700/50 flex items-center justify-center mb-3 group-hover:bg-gray-700 transition-colors">
+        <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      </div>
+      <p class="text-sm font-medium text-white">Buat Project</p>
+      <p class="text-xs text-gray-500 mt-0.5">Tambah website WordPress baru</p>
+    </a>
+    <a href="{% url 'queue_list' %}" class="card p-5 hover:border-violet-500/50 transition-colors group">
+      <div class="w-9 h-9 rounded-lg bg-gray-700/50 flex items-center justify-center mb-3 group-hover:bg-gray-700 transition-colors">
+        <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10"/></svg>
+      </div>
+      <p class="text-sm font-medium text-white">Queue</p>
+      <p class="text-xs text-gray-500 mt-0.5">{{ pending }} pending · {{ processing }} berjalan</p>
+    </a>
+  </div>
+
+  <!-- Recent jobs -->
+  <div class="card">
+    <div class="flex items-center justify-between px-5 py-3 border-b border-gray-800">
+      <h2 class="text-sm font-medium text-white">Job Terakhir</h2>
+      <a href="{% url 'queue_list' %}" class="text-xs text-violet-400 hover:text-violet-300">Lihat semua →</a>
+    </div>
+    {% if recent_jobs %}
+    <div class="divide-y divide-gray-800">
+      {% for job in recent_jobs %}
+      <div class="flex items-center gap-4 px-5 py-3">
+        <div class="flex-1 min-w-0">
+          <p class="text-sm text-white truncate">{{ job.keyword }}</p>
+          <p class="text-xs text-gray-500 mt-0.5">{{ job.project.name }} · {{ job.created_at|date:"d M Y H:i" }}</p>
+        </div>
+        <span class="badge-{{ job.status }}">{{ job.get_status_display }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="px-5 py-10 text-center">
+      <p class="text-gray-600 text-sm">Belum ada job. Buat project dan masukkan keyword untuk memulai.</p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

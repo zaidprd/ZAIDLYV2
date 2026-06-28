@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Kredit — SEO.Zaidly{% endblock %}
+{% block page_title %}Kredit & Penggunaan{% endblock %}
+{% block content %}
+<div class="max-w-2xl space-y-5">
+
+  <!-- Summary -->
+  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0.75rem;">
+    <div class="card p-4 text-center">
+      <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.375rem;">Tersedia</p>
+      <p style="font-size:1.75rem; font-weight:700; color:#a78bfa;">{{ credits }}</p>
+    </div>
+    <div class="card p-4 text-center">
+      <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.375rem;">Digunakan</p>
+      <p style="font-size:1.75rem; font-weight:700; color:#e5e7eb;">{{ credits_used }}</p>
+    </div>
+    <div class="card p-4 text-center">
+      <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.375rem;">Total</p>
+      <p style="font-size:1.75rem; font-weight:700; color:#e5e7eb;">{{ credits|add:credits_used }}</p>
+    </div>
+  </div>
+
+  <!-- Credit info -->
+  <div style="padding:0.875rem 1rem; background:#1f2937; border-radius:0.5rem; font-size:0.8125rem; color:#9ca3af;">
+    1 kredit = 1 artikel. Kredit tidak kedaluwarsa.
+  </div>
+
+  <!-- Transaction history -->
+  <div class="card">
+    <div style="padding:0.75rem 1.25rem; border-bottom:1px solid #1f2937;">
+      <h2 style="font-size:0.875rem; font-weight:600; color:#fff;">Riwayat Transaksi</h2>
+    </div>
+    {% if transactions %}
+    <div style="divide-y divide-gray-800;">
+      {% for tx in transactions %}
+      <div style="display:flex; align-items:center; gap:1rem; padding:0.875rem 1.25rem; border-bottom:1px solid #111827;">
+        <div style="flex:1; min-width:0;">
+          <p style="font-size:0.875rem; color:#e5e7eb; margin-bottom:0.125rem;">{{ tx.description }}</p>
+          <p style="font-size:0.75rem; color:#6b7280;">{{ tx.created_at|date:"d M Y H:i" }}</p>
+        </div>
+        <span style="font-size:0.9375rem; font-weight:600; flex-shrink:0;
+          color:{% if tx.amount > 0 %}#6ee7b7{% else %}#fca5a5{% endif %};">
+          {% if tx.amount > 0 %}+{% endif %}{{ tx.amount }}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="padding:3rem; text-align:center; color:#6b7280; font-size:0.875rem;">
+      Belum ada transaksi.
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

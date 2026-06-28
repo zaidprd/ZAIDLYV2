@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Hapus Project — SEO.Zaidly{% endblock %}
+{% block page_title %}Hapus Project{% endblock %}
+{% block content %}
+<div class="max-w-sm">
+  <div class="card p-6 text-center space-y-4">
+    <p class="text-white font-medium">Hapus "{{ project.name }}"?</p>
+    <p class="text-sm text-gray-500">Semua sites dan jobs dalam project ini akan ikut terhapus.</p>
+    <div class="flex gap-3 justify-center">
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn-danger">Ya, Hapus</button>
+      </form>
+      <a href="{% url 'project_detail' project.pk %}" class="btn-secondary">Batal</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

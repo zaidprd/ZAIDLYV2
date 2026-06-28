@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Job Detail — SEO.Zaidly{% endblock %}
+{% block page_title %}Job Detail{% endblock %}
+{% block content %}
+<div class="max-w-2xl space-y-4">
+  <div class="card p-5 space-y-3">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-lg font-medium text-white">{{ job.keyword }}</p>
+        {% if job.title %}<p class="text-sm text-gray-400 mt-0.5">{{ job.title }}</p>{% endif %}
+      </div>
+      <span class="badge-{{ job.status }}">{{ job.get_status_display }}</span>
+    </div>
+    <div class="grid grid-cols-2 gap-3 text-sm pt-2 border-t border-gray-800">
+      <div><span class="text-gray-500">Project:</span> <span class="text-white ml-2">{{ job.project.name }}</span></div>
+      <div><span class="text-gray-500">Tipe:</span> <span class="text-white ml-2">{{ job.get_job_type_display }}</span></div>
+      <div><span class="text-gray-500">Retry:</span> <span class="text-white ml-2">{{ job.retry_count }}/{{ job.max_retries }}</span></div>
+      <div><span class="text-gray-500">Dibuat:</span> <span class="text-white ml-2">{{ job.created_at|date:"d M Y H:i" }}</span></div>
+      {% if job.started_at %}
+      <div><span class="text-gray-500">Mulai:</span> <span class="text-white ml-2">{{ job.started_at|date:"d M Y H:i" }}</span></div>
+      {% endif %}
+      {% if job.completed_at %}
+      <div><span class="text-gray-500">Selesai:</span> <span class="text-white ml-2">{{ job.completed_at|date:"d M Y H:i" }}</span></div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if job.error_message %}
+  <div class="card p-4 border-red-900/50">
+    <p class="text-xs font-medium text-red-400 mb-1">Error</p>
+    <p class="text-sm text-gray-400 font-mono">{{ job.error_message }}</p>
+  </div>
+  {% endif %}
+
+  <div class="flex gap-2">
+    <a href="{% url 'queue_list' %}" class="btn-secondary">← Kembali</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Projects — SEO.Zaidly{% endblock %}
+{% block page_title %}Projects{% endblock %}
+{% block content %}
+<div class="max-w-3xl">
+  <div class="flex items-center justify-between mb-5">
+    <p class="text-sm text-gray-500">{{ projects.count }} project</p>
+    <a href="{% url 'project_new' %}" class="btn-primary">+ Project Baru</a>
+  </div>
+
+  {% if projects %}
+  <div class="space-y-2">
+    {% for project in projects %}
+    <a href="{% url 'project_detail' project.pk %}"
+       class="card flex items-center gap-4 px-5 py-4 hover:border-gray-700 transition-colors block">
+      <div class="w-9 h-9 rounded-lg bg-violet-600/20 flex items-center justify-center text-sm font-bold text-violet-400 flex-shrink-0">
+        {{ project.name|first|upper }}
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-medium text-white">{{ project.name }}</p>
+        <p class="text-xs text-gray-500 mt-0.5">
+          {{ project.get_language_display }} · {{ project.get_tone_display }} · {{ project.sites.count }} site
+        </p>
+      </div>
+      <div class="text-right flex-shrink-0">
+        <p class="text-xs text-gray-500">{{ project.jobs.count }} jobs</p>
+        {% if project.auto_publish %}
+        <span class="badge bg-emerald-900/40 text-emerald-400 mt-1">Auto Publish</span>
+        {% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card px-5 py-16 text-center">
+    <p class="text-gray-600 text-sm mb-4">Belum ada project.</p>
+    <a href="{% url 'project_new' %}" class="btn-primary">Buat Project Pertama</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

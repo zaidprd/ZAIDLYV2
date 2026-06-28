@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Monitoring — SEO.Zaidly{% endblock %}
+{% block page_title %}Monitoring{% endblock %}
+{% block content %}
+<div class="max-w-4xl space-y-5">
+
+  <!-- Queue stats -->
+  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0.75rem;">
+    <div class="card p-4">
+      <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.25rem;">Pending</p>
+      <p style="font-size:1.5rem; font-weight:700; color:#fcd34d;">{{ stats.pending }}</p>
+    </div>
+    <div class="card p-4">
+      <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.25rem;">Processing</p>
+      <p style="font-size:1.5rem; font-weight:700; color:#93c5fd;">{{ stats.processing }}</p>
+    </div>
+    <div class="card p-4">
+      <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.25rem;">Published</p>
+      <p style="font-size:1.5rem; font-weight:700; color:#6ee7b7;">{{ stats.published }}</p>
+    </div>
+    <div class="card p-4">
+      <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.25rem;">Failed</p>
+      <p style="font-size:1.5rem; font-weight:700; color:#fca5a5;">{{ stats.failed }}</p>
+    </div>
+    <div class="card p-4">
+      <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.25rem;">Paused</p>
+      <p style="font-size:1.5rem; font-weight:700; color:#e5e7eb;">{{ stats.paused }}</p>
+    </div>
+    <div class="card p-4">
+      <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.25rem;">Total</p>
+      <p style="font-size:1.5rem; font-weight:700; color:#e5e7eb;">{{ stats.total }}</p>
+    </div>
+  </div>
+
+  <!-- Hermes workers -->
+  <div class="card p-5">
+    <h2 style="font-size:0.875rem; font-weight:600; color:#fff; margin-bottom:0.75rem;">Hermes Workers</h2>
+    {% if workers %}
+    <div style="display:flex; flex-direction:column; gap:0.5rem;">
+      {% for w in workers %}
+      <div style="display:flex; align-items:center; gap:1rem; font-size:0.8125rem;">
+        <span style="color:#6ee7b7;">●</span>
+        <span style="color:#e5e7eb;">{{ w.cluster_id }}</span>
+        <span style="color:#6b7280;">{{ w.workers }} workers</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p style="font-size:0.875rem; color:#f87171;">
+      ⚠ Hermes tidak berjalan. Jalankan: <code style="color:#a78bfa;">python manage.py qcluster</code>
+    </p>
+    {% endif %}
+  </div>
+
+  <!-- Published per day (7 hari terakhir) -->
+  {% if daily_published %}
+  <div class="card p-5">
+    <h2 style="font-size:0.875rem; font-weight:600; color:#fff; margin-bottom:0.75rem;">Published per Hari (7 Hari Terakhir)</h2>
+    <div style="display:flex; flex-direction:column; gap:0.5rem;">
+      {% for d in daily_published %}
+      <div style="display:flex; align-items:center; gap:0.75rem;">
+        <span style="font-size:0.8125rem; color:#6b7280; width:6rem; flex-shrink:0;">{{ d.day|date:"d M" }}</span>
+        <div style="flex:1; background:#1f2937; border-radius:9999px; height:0.5rem; overflow:hidden;">
+          <div style="height:100%; background:#7c3aed; border-radius:9999px; width:{{ d.count|default:0 }}0%;
+               max-width:100%;"></div>
+        </div>
+        <span style="font-size:0.8125rem; color:#e5e7eb; width:2rem; text-align:right;">{{ d.count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Recent failures -->
+  {% if recent_failures %}
+  <div class="card">
+    <div style="padding:0.75rem 1.25rem; border-bottom:1px solid #1f2937;">
+      <h2 style="font-size:0.875rem; font-weight:600; color:#fff;">Kegagalan Terbaru (7 hari)</h2>
+    </div>
+    <div>
+      {% for job in recent_failures %}
+      <div style="display:flex; align-items:flex-start; gap:1rem; padding:0.875rem 1.25rem; border-bottom:1px solid #111827;">
+        <div style="flex:1; min-width:0;">
+          <p style="font-size:0.875rem; color:#e5e7eb; margin-bottom:0.125rem; truncate;">{{ job.keyword }}</p>
+          <p style="font-size:0.75rem; color:#f87171; margin-bottom:0.125rem;">{{ job.error_message|truncatechars:120 }}</p>
+          <p style="font-size:0.75rem; color:#6b7280;">{{ job.user.email }} · {{ job.project.name }} · {{ job.updated_at|date:"d M H:i" }}</p>
+        </div>
+        <a href="{% url 'queue_detail' job.pk %}"
+           style="font-size:0.75rem; color:#a78bfa; flex-shrink:0; white-space:nowrap;">Detail →</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="card p-5">
+    <p style="font-size:0.875rem; color:#6ee7b7;">✓ Tidak ada kegagalan dalam 7 hari terakhir.</p>
+  </div>
+  {% endif %}
+
+  <p style="font-size:0.75rem; color:#374151; text-align:right;">Diperbarui: {{ now|date:"d M Y H:i:s" }}</p>
+
+</div>
+{% endblock %}

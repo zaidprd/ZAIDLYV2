@@ -1,0 +1,8 @@
+Django==6.0.6
+psycopg2-binary==2.9.12
+django-q2==1.10.0
+django-picklefield==3.4.0
+python-decouple==3.8
+requests==2.32.3
+Pillow==11.2.1
+gunicorn==23.0.0

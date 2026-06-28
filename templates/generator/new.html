@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Generate Artikel — SEO.Zaidly{% endblock %}
+{% block page_title %}Generate Artikel SEO{% endblock %}
+{% block content %}
+<div class="max-w-2xl space-y-6">
+
+  {% csrf_token %}
+
+  <!-- Step 1: Input -->
+  <div class="card p-6 space-y-5">
+    <div>
+      <h2 style="font-size:0.9375rem; font-weight:600; color:#fff; margin-bottom:0.25rem;">Langkah 1 — Masukkan Keyword</h2>
+      <p style="font-size:0.8125rem; color:#6b7280;">Keyword utama yang ingin ditarget. Contoh: cara membuat website toko online</p>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:1rem;">
+      <div>
+        <label class="label">Project *</label>
+        <select id="project-select" name="project" class="input">
+          <option value="">Pilih project...</option>
+          {% for p in projects %}
+          <option value="{{ p.pk }}">{{ p.name }}</option>
+          {% endfor %}
+        </select>
+        {% if not projects %}
+        <p style="font-size:0.75rem; color:#f87171; margin-top:0.375rem;">
+          Belum ada project. <a href="{% url 'project_new' %}" style="color:#a78bfa;">Buat project dulu →</a>
+        </p>
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="label">Keyword *</label>
+        <input type="text" id="keyword-input" class="input"
+               placeholder="Contoh: cara membuat website toko online"
+               maxlength="300">
+      </div>
+
+      <button id="generate-btn" type="button"
+              style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.625rem 1.25rem; background:#7c3aed; color:#fff; border:none; border-radius:0.5rem; font-size:0.875rem; font-weight:500; cursor:pointer;"
+              onclick="generateTitles()">
+        <span id="btn-text">Generate 15 Judul →</span>
+        <span id="btn-spinner" style="display:none;">Memuat...</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 2: Title selection (loaded via HTMX/fetch) -->
+  <div id="titles-container"></div>
+
+</div>
+
+<script>
+function generateTitles() {
+  const keyword = document.getElementById('keyword-input').value.trim();
+  const project = document.getElementById('project-select').value;
+
+  if (!keyword || !project) {
+    document.getElementById('titles-container').innerHTML =
+      '<p style="color:#f87171; font-size:0.875rem;">Pilih project dan masukkan keyword.</p>';
+    return;
+  }
+
+  const btn = document.getElementById('generate-btn');
+  const btnText = document.getElementById('btn-text');
+  const spinner = document.getElementById('btn-spinner');
+  btn.disabled = true;
+  btnText.style.display = 'none';
+  spinner.style.display = 'inline';
+  document.getElementById('titles-container').innerHTML =
+    '<div class="card p-6" style="text-align:center;color:#6b7280;font-size:0.875rem;">Membuat judul dengan AI... mohon tunggu</div>';
+
+  const formData = new FormData();
+  formData.append('keyword', keyword);
+  formData.append('project', project);
+  formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+  fetch('{% url "generate_titles" %}', {
+    method: 'POST',
+    body: formData,
+  })
+  .then(r => r.text())
+  .then(html => {
+    document.getElementById('titles-container').innerHTML = html;
+  })
+  .catch(() => {
+    document.getElementById('titles-container').innerHTML =
+      '<p style="color:#f87171; font-size:0.875rem;">Terjadi kesalahan. Coba lagi.</p>';
+  })
+  .finally(() => {
+    btn.disabled = false;
+    btnText.style.display = 'inline';
+    spinner.style.display = 'none';
+  });
+}
+
+document.getElementById('keyword-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') generateTitles();
+});
+</script>
+{% endblock %}

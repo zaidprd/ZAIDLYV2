@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — SEO.Zaidly{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="max-w-xl">
+  <div class="card p-6">
+    <form method="post" class="space-y-5">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="label">Nama Project *</label>
+        {{ form.name }}
+        {% if form.name.errors %}<p class="text-xs text-red-400 mt-1">{{ form.name.errors.0 }}</p>{% endif %}
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="form-group">
+          <label class="label">Bahasa</label>
+          <select name="language" class="input">
+            {% for val, label in form.fields.language.choices %}
+            <option value="{{ val }}" {% if form.language.value == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="label">Tone of Voice</label>
+          <select name="tone" class="input">
+            {% for val, label in form.fields.tone.choices %}
+            <option value="{{ val }}" {% if form.tone.value == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="label">Target Audience</label>
+        {{ form.target_audience }}
+      </div>
+
+      <div class="form-group">
+        <label class="label">Model AI</label>
+        {{ form.ai_model }}
+        <p class="text-xs text-gray-600 mt-1">Contoh: gpt-4o-mini, gpt-4o</p>
+      </div>
+
+      <div style="padding:1rem; background:#1a1a2e; border:1px solid #2a2a3a; border-radius:0.5rem; display:flex; flex-direction:column; gap:0.875rem;">
+        <p style="font-size:0.75rem; font-weight:600; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em;">Publish & Scheduler</p>
+
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+          <input type="checkbox" name="auto_publish" id="auto_publish"
+                 {% if form.auto_publish.value %}checked{% endif %}
+                 style="width:1rem; height:1rem; accent-color:#7c3aed;">
+          <label for="auto_publish" style="font-size:0.875rem; color:#e5e7eb;">Auto Publish ke WordPress</label>
+        </div>
+
+        <div class="form-group">
+          <label class="label">Jam Publish</label>
+          {{ form.schedule_times }}
+          <p style="font-size:0.75rem; color:#6b7280; margin-top:0.25rem;">{{ form.schedule_times.help_text }}</p>
+        </div>
+
+        <div class="form-group">
+          <label class="label">Batas Artikel per Hari</label>
+          {{ form.daily_limit }}
+          <p style="font-size:0.75rem; color:#6b7280; margin-top:0.25rem;">{{ form.daily_limit.help_text }}</p>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+          <input type="checkbox" name="threads_enabled" id="threads_enabled"
+                 {% if form.threads_enabled.value %}checked{% endif %}
+                 style="width:1rem; height:1rem; accent-color:#7c3aed;">
+          <label for="threads_enabled" style="font-size:0.875rem; color:#e5e7eb;">Post ke Threads otomatis</label>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 pt-2">
+        <button type="submit" class="btn-primary">Simpan</button>
+        {% if project %}
+        <a href="{% url 'project_detail' project.pk %}" class="btn-secondary">Batal</a>
+        {% else %}
+        <a href="{% url 'project_list' %}" class="btn-secondary">Batal</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

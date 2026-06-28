@@ -1,0 +1,34 @@
+{% extends "base_auth.html" %}
+{% block title %}Login — SEO.Zaidly{% endblock %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-950 px-4">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-8">
+      <div class="w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center text-lg font-bold mx-auto mb-4">S</div>
+      <h1 class="text-xl font-semibold text-white">Masuk ke SEO.Zaidly</h1>
+      <p class="text-sm text-gray-500 mt-1">AI Content Production System</p>
+    </div>
+
+    <div class="card p-6">
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="label">Email</label>
+          {{ form.username }}
+          {% if form.username.errors %}<p class="text-xs text-red-400 mt-1">{{ form.username.errors.0 }}</p>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="label">Password</label>
+          <input type="password" name="password" class="input" placeholder="Password" required>
+          {% if form.non_field_errors %}<p class="text-xs text-red-400 mt-1">{{ form.non_field_errors.0 }}</p>{% endif %}
+        </div>
+        <button type="submit" class="btn-primary w-full justify-center">Masuk</button>
+      </form>
+    </div>
+
+    <p class="text-center text-sm text-gray-500 mt-4">
+      Belum punya akun? <a href="{% url 'register' %}" class="text-violet-400 hover:text-violet-300">Daftar</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

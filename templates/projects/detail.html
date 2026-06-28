@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} — SEO.Zaidly{% endblock %}
+{% block page_title %}{{ project.name }}{% endblock %}
+{% block content %}
+<div class="max-w-3xl space-y-5">
+
+  <!-- Project info -->
+  <div class="card p-5">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-xs text-gray-500 mb-3">Detail Project</p>
+        <div class="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+          <div><span class="text-gray-500">Bahasa:</span> <span class="text-white ml-2">{{ project.get_language_display }}</span></div>
+          <div><span class="text-gray-500">Tone:</span> <span class="text-white ml-2">{{ project.get_tone_display }}</span></div>
+          <div><span class="text-gray-500">Model AI:</span> <span class="text-white ml-2">{{ project.ai_model }}</span></div>
+          <div><span class="text-gray-500">Auto Publish:</span>
+            <span class="ml-2 {% if project.auto_publish %}text-emerald-400{% else %}text-gray-500{% endif %}">
+              {{ project.auto_publish|yesno:"Aktif,Nonaktif" }}
+            </span>
+          </div>
+          <div><span class="text-gray-500">Threads:</span>
+            <span class="ml-2 {% if project.threads_enabled %}text-emerald-400{% else %}text-gray-500{% endif %}">
+              {{ project.threads_enabled|yesno:"Aktif,Nonaktif" }}
+            </span>
+          </div>
+          {% if project.schedule_times %}
+          <div><span class="text-gray-500">Jadwal:</span> <span class="text-white ml-2">{{ project.schedule_times }}</span></div>
+          {% endif %}
+          {% if project.daily_limit %}
+          <div><span class="text-gray-500">Batas/hari:</span> <span class="text-white ml-2">{{ project.daily_limit }} artikel</span></div>
+          {% endif %}
+          {% if project.target_audience %}
+          <div class="col-span-2"><span class="text-gray-500">Target:</span> <span class="text-white ml-2">{{ project.target_audience }}</span></div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <a href="{% url 'project_edit' project.pk %}" class="btn-secondary">Edit</a>
+        <a href="{% url 'project_delete' project.pk %}" class="btn-danger">Hapus</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- WordPress Sites -->
+  <div class="card">
+    <div class="flex items-center justify-between px-5 py-3 border-b border-gray-800">
+      <h2 class="text-sm font-medium text-white">WordPress Sites</h2>
+      <a href="{% url 'site_new' project.pk %}" class="btn-primary text-xs">+ Tambah Site</a>
+    </div>
+    {% if sites %}
+    <div class="divide-y divide-gray-800">
+      {% for site in sites %}
+      <div class="flex items-center gap-4 px-5 py-3.5">
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-white">{{ site.name }}</p>
+          <p class="text-xs text-gray-500 mt-0.5">{{ site.url }}</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <div id="test-result-{{ site.pk }}"></div>
+          <button class="btn-secondary text-xs"
+                  hx-post="{% url 'site_test' project.pk site.pk %}"
+                  hx-target="#test-result-{{ site.pk }}"
+                  hx-indicator="#spinner-{{ site.pk }}"
+                  hx-include="[name=csrfmiddlewaretoken]">
+            <span id="spinner-{{ site.pk }}" class="htmx-indicator">...</span>
+            Test Koneksi
+          </button>
+          <form method="post" action="{% url 'site_delete' project.pk site.pk %}" class="inline"
+                onsubmit="return confirm('Hapus site ini?')">
+            {% csrf_token %}
+            <button type="submit" class="btn-danger text-xs">Hapus</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="px-5 py-8 text-center">
+      <p class="text-gray-600 text-sm">Belum ada site. Tambahkan WordPress site untuk mulai publish.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Jobs -->
+  <div class="card">
+    <div class="flex items-center justify-between px-5 py-3 border-b border-gray-800">
+      <h2 class="text-sm font-medium text-white">Jobs</h2>
+      <a href="{% url 'queue_list' %}?project={{ project.pk }}" class="text-xs text-violet-400 hover:text-violet-300">Lihat semua →</a>
+    </div>
+    {% with jobs=project.jobs.all %}
+    {% if jobs %}
+    <div class="divide-y divide-gray-800">
+      {% for job in jobs|slice:":5" %}
+      <div class="flex items-center gap-4 px-5 py-3">
+        <div class="flex-1 min-w-0">
+          <p class="text-sm text-white truncate">{{ job.keyword }}</p>
+          <p class="text-xs text-gray-500 mt-0.5">{{ job.created_at|date:"d M Y H:i" }}</p>
+        </div>
+        <span class="badge-{{ job.status }}">{{ job.get_status_display }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="px-5 py-8 text-center">
+      <p class="text-gray-600 text-sm">Belum ada job untuk project ini.</p>
+    </div>
+    {% endif %}
+    {% endwith %}
+  </div>
+
+</div>
+{% endblock %}

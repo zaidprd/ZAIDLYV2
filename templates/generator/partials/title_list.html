@@ -1,0 +1,49 @@
+<div class="card p-6 space-y-4">
+  <div>
+    <h2 style="font-size:0.9375rem; font-weight:600; color:#fff; margin-bottom:0.25rem;">Langkah 2 — Pilih Judul</h2>
+    <p style="font-size:0.8125rem; color:#6b7280;">{{ titles|length }} judul dihasilkan untuk keyword: <strong style="color:#fff;">{{ keyword }}</strong></p>
+  </div>
+
+  <form method="post" action="{% url 'generate_start' %}" id="title-form">
+    {% csrf_token %}
+    <input type="hidden" name="keyword" value="{{ keyword }}">
+    <input type="hidden" name="project" value="{{ project.pk }}">
+    <input type="hidden" name="title" id="selected-title" value="">
+
+    <div style="display:flex; flex-direction:column; gap:0.5rem;">
+      {% for title in titles %}
+      <button type="button"
+              onclick="selectTitle(this, '{{ title|escapejs }}')"
+              style="text-align:left; padding:0.875rem 1rem; background:#1f2937; border:1px solid #374151; border-radius:0.5rem; color:#e5e7eb; font-size:0.875rem; cursor:pointer; transition:all 0.15s;"
+              onmouseover="this.style.borderColor='#7c3aed'; this.style.background='rgba(124,58,237,0.1)';"
+              onmouseout="if(!this.classList.contains('selected')){ this.style.borderColor='#374151'; this.style.background='#1f2937'; }">
+        {{ title }}
+      </button>
+      {% endfor %}
+    </div>
+
+    <div id="selected-info" style="display:none; margin-top:1rem; padding:0.75rem 1rem; background:rgba(124,58,237,0.1); border:1px solid rgba(124,58,237,0.3); border-radius:0.5rem;">
+      <p style="font-size:0.75rem; color:#a78bfa; margin-bottom:0.25rem;">Judul dipilih:</p>
+      <p id="selected-title-display" style="font-size:0.875rem; color:#fff; font-weight:500;"></p>
+      <button type="submit" style="margin-top:0.75rem; padding:0.5rem 1.25rem; background:#7c3aed; color:#fff; border:none; border-radius:0.5rem; font-size:0.875rem; font-weight:500; cursor:pointer;">
+        Generate Artikel Penuh →
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+function selectTitle(btn, title) {
+  document.querySelectorAll('#title-form button[type="button"]').forEach(b => {
+    b.classList.remove('selected');
+    b.style.borderColor = '#374151';
+    b.style.background = '#1f2937';
+  });
+  btn.classList.add('selected');
+  btn.style.borderColor = '#7c3aed';
+  btn.style.background = 'rgba(124,58,237,0.15)';
+  document.getElementById('selected-title').value = title;
+  document.getElementById('selected-title-display').textContent = title;
+  document.getElementById('selected-info').style.display = 'block';
+}
+</script>

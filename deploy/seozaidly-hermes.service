@@ -1,0 +1,15 @@
+[Unit]
+Description=SEO.Zaidly Hermes (Django-Q Worker)
+After=network.target seozaidly-web.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/seozaidly
+EnvironmentFile=/var/www/seozaidly/.env
+ExecStart=/var/www/seozaidly/venv/bin/python manage.py qcluster
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
