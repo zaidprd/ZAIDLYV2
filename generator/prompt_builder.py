@@ -198,6 +198,26 @@ def build_article_messages(spec: ArticleSpec):
     ]
 
 
+def build_revision_messages(spec: ArticleSpec, previous_output: str, failures):
+    """Ask the model to FIX specific SEO issues, re-emitting the full output block."""
+    issues = "\n".join(f"- {f}" for f in failures)
+    system = (
+        "Kamu adalah SEO editor. Perbaiki artikel berikut agar lolos standar SEO. "
+        "Pertahankan kualitas & gaya, jangan kurangi panjang. "
+        "Keluarkan ULANG seluruh blok output dengan format penanda yang SAMA PERSIS "
+        "(<<<META_TITLE>>> ... <<<END>>>), tanpa teks lain."
+    )
+    user = (
+        f"Keyword utama: {spec.keyword}\n\n"
+        f"Masalah SEO yang HARUS diperbaiki:\n{issues}\n\n"
+        f"Artikel saat ini:\n{previous_output}"
+    )
+    return [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user},
+    ]
+
+
 def build_titles_messages(keyword, *, language="id", tone="informative",
                           target_audience="", writing_style="blog", count=15):
     """Assemble chat messages for SEO title generation."""

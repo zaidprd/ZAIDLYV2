@@ -85,3 +85,60 @@ class GenerateArticleTaskTests(TestCase):
         self.assertAlmostEqual(job.cost_total_usd, job.cost_text_usd + job.cost_image_usd, places=6)
         self.assertGreater(job.word_count, 0)
         self.assertEqual(job.duration_ms, 4200)
+        self.assertTrue(job.quality_passed)
+        self.assertEqual(job.revision_count, 0)
+
+
+# A deliberately failing output: keyword absent from meta/body, too short, no FAQ/schema.
+BAD = """<<<META_TITLE>>>
+Judul Acak
+<<<META_DESCRIPTION>>>
+Deskripsi singkat tanpa relevansi yang memadai untuk pembaca.
+<<<SLUG>>>
+judul-acak
+<<<IMAGE_PROMPT>>>
+random
+<<<IMAGE_ALT>>>
+gambar
+<<<ARTICLE_HTML>>>
+<h2>Bagian</h2><p>Teks pendek.</p>
+<<<SCHEMA_JSONLD>>>
+
+<<<END>>>"""
+
+
+class QualityGateRevisionTests(TestCase):
+    def setUp(self):
+        self.u = User.objects.create_user(username='qg', password='x', email='q@q.com')
+        self.u.credits = 1000
+        self.u.save()
+        self.p = Project.objects.create(user=self.u, name='P', language='id',
+                                        tone='educational', writing_style='tutorial',
+                                        default_length=1500, auto_publish=False)
+        self._orig_gen = gt.generate
+        self._orig_img = gt.generate_image
+        self._calls = {'n': 0}
+
+        def fake_gen(messages, **kw):
+            self._calls['n'] += 1
+            text = BAD if self._calls['n'] == 1 else SAMPLE  # fail first, fix on revision
+            return GenerationResult(text=text, model='gpt-4o-mini', tokens_in=1000,
+                                    tokens_out=2000, duration_ms=3000)
+        gt.generate = fake_gen
+        gt.generate_image = lambda *a, **k: ''
+
+    def tearDown(self):
+        gt.generate = self._orig_gen
+        gt.generate_image = self._orig_img
+
+    def test_revision_runs_and_accumulates(self):
+        job = QueueJob.objects.create(user=self.u, project=self.p,
+                                      job_type=QueueJob.TYPE_GENERATE,
+                                      keyword='sholat dhuha', title='Panduan Sholat Dhuha',
+                                      options={'length': 1500, 'faq': True})
+        gt.run_generate_article(job.id)
+        job.refresh_from_db()
+        self.assertEqual(job.revision_count, 1)            # one auto-revision happened
+        self.assertEqual(self._calls['n'], 2)              # initial + 1 revision
+        self.assertEqual(job.tokens_in, 2000)              # accumulated 1000 + 1000
+        self.assertEqual(job.result['slug'], 'panduan-sholat-dhuha')  # kept the fixed version

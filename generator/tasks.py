@@ -2,9 +2,12 @@ from decouple import config
 
 from ai_service import generate, generate_image
 from ai_service import pricing
-from .prompt_builder import build_titles_messages, build_article_messages, article_spec_from_project
+from .prompt_builder import (
+    build_titles_messages, build_article_messages, build_revision_messages,
+    article_spec_from_project,
+)
 from .parsing import parse_article_output, slugify, count_words
-from .seo import validate
+from .seo import score_article
 
 
 def _max_tokens_for(length):
@@ -60,9 +63,49 @@ def run_generate_article(job_id):
             internal_links=opts.get('internal_links'),
             external_links=opts.get('external_links'),
         )
-        messages = build_article_messages(spec)
-        gen = generate(messages, model=project.ai_model, max_tokens=_max_tokens_for(spec.length))
-        sections = parse_article_output(gen.text)
+        max_tok = _max_tokens_for(spec.length)
+        threshold = config('QUALITY_MIN_SCORE', default=70, cast=int)
+        max_revisions = config('QUALITY_MAX_REVISIONS', default=1, cast=int)
+
+        def _evaluate(text):
+            s = parse_article_output(text)
+            seo = score_article(
+                keyword=job.keyword,
+                meta_title=s['META_TITLE'] or job.title,
+                meta_description=s['META_DESCRIPTION'],
+                slug=s['SLUG'] or slugify(job.title),
+                article_html=s['ARTICLE_HTML'],
+                image_alt=s['IMAGE_ALT'] or job.title,
+                length_target=spec.length,
+                faq_required=spec.faq,
+                schema_required=spec.schema,
+                schema_jsonld=s['SCHEMA_JSONLD'],
+                threshold=threshold,
+            )
+            return s, seo
+
+        # Initial generation
+        gen = generate(build_article_messages(spec), model=project.ai_model, max_tokens=max_tok)
+        model_used, tot_in, tot_out, tot_ms = gen.model, gen.tokens_in, gen.tokens_out, gen.duration_ms
+        fallback_used = gen.fallback_used
+        output_text = gen.text
+        sections, seo = _evaluate(output_text)
+
+        # Quality gate: auto-revise failing output until it passes or we run out of tries
+        revisions = 0
+        while not seo['passed'] and revisions < max_revisions:
+            rgen = generate(build_revision_messages(spec, output_text, seo['failures']),
+                            model=project.ai_model, max_tokens=max_tok)
+            tot_in += rgen.tokens_in
+            tot_out += rgen.tokens_out
+            tot_ms += rgen.duration_ms
+            fallback_used = fallback_used or rgen.fallback_used
+            revisions += 1
+            new_sections, new_seo = _evaluate(rgen.text)
+            if new_seo['score'] >= seo['score']:  # keep the better version
+                sections, seo, output_text = new_sections, new_seo, rgen.text
+            else:
+                break
 
         article_html = sections['ARTICLE_HTML']
         meta_description = sections['META_DESCRIPTION']
@@ -80,24 +123,25 @@ def run_generate_article(job_id):
         except Exception:
             pass
 
-        # SEO validation
-        seo = validate(job.keyword, job.title, article_html, meta_description)
-
-        # Cost / HPP telemetry
-        cost_text = pricing.estimate_text_cost(gen.model, gen.tokens_in, gen.tokens_out)
+        # Cost / HPP telemetry (accumulated across generation + revisions)
+        cost_text = pricing.estimate_text_cost(model_used, tot_in, tot_out)
         cost_image = pricing.estimate_image_cost(image_model) if img_url else 0.0
-        job.model_used = gen.model
-        job.tokens_in = gen.tokens_in
-        job.tokens_out = gen.tokens_out
+        job.model_used = model_used
+        job.tokens_in = tot_in
+        job.tokens_out = tot_out
         job.cost_text_usd = round(cost_text, 6)
         job.cost_image_usd = round(cost_image, 6)
         job.cost_total_usd = round(cost_text + cost_image, 6)
-        job.duration_ms = gen.duration_ms
+        job.duration_ms = tot_ms
         job.word_count = count_words(article_html)
-        job.gen_fallback_used = gen.fallback_used
+        job.gen_fallback_used = fallback_used
+        job.quality_score = seo['score']
+        job.quality_passed = seo['passed']
+        job.revision_count = revisions
         job.save(update_fields=[
             'model_used', 'tokens_in', 'tokens_out', 'cost_text_usd', 'cost_image_usd',
-            'cost_total_usd', 'duration_ms', 'word_count', 'gen_fallback_used', 'updated_at',
+            'cost_total_usd', 'duration_ms', 'word_count', 'gen_fallback_used',
+            'quality_score', 'quality_passed', 'revision_count', 'updated_at',
         ])
 
         result = {
@@ -109,11 +153,12 @@ def run_generate_article(job_id):
             'image_alt': image_alt,
             'schema_jsonld': schema_jsonld,
             'seo': seo,
+            'quality_passed': seo['passed'],
         }
         job.mark_done(result)
 
-        # Auto-publish: queue publish job if project has auto_publish + active site
-        if project.auto_publish:
+        # Auto-publish only when quality gate passed (failing -> needs manual review)
+        if project.auto_publish and seo['passed']:
             site = job.site or project.sites.filter(is_active=True).first()
             if site:
                 publish_job = QueueJob.objects.create(
