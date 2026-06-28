@@ -20,11 +20,14 @@ def run_publish_wordpress(job_id):
         result = dict(job.result)
         client = WordPressClient(job.site)
 
-        # Upload featured image if available
+        # Upload featured image (with alt text) if available
         featured_media_id = None
         if result.get('image_url'):
             try:
-                featured_media_id = client.upload_image(result['image_url'])
+                featured_media_id = client.upload_image(
+                    result['image_url'],
+                    alt_text=result.get('image_alt', ''),
+                )
             except Exception:
                 pass
 
@@ -35,6 +38,7 @@ def run_publish_wordpress(job_id):
             slug=result.get('slug', ''),
             meta_description=result.get('meta_description', ''),
             featured_media_id=featured_media_id,
+            meta_title=result.get('meta_title', ''),
         )
 
         result.update(wp_result)

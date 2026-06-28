@@ -16,7 +16,7 @@ class WordPressClient:
         resp.raise_for_status()
         return resp.json()
 
-    def upload_image(self, image_url, filename='featured.jpg'):
+    def upload_image(self, image_url, filename='featured.jpg', alt_text=''):
         img_resp = requests.get(image_url, timeout=30)
         img_resp.raise_for_status()
 
@@ -31,9 +31,16 @@ class WordPressClient:
             timeout=60,
         )
         resp.raise_for_status()
-        return resp.json()['id']
+        media_id = resp.json()['id']
 
-    def publish_post(self, title, content, slug, meta_description, status='publish', featured_media_id=None):
+        # Set alt text (and title) on the media object — a second call is required
+        # because the binary upload can't carry JSON fields.
+        if alt_text:
+            self._post(f'media/{media_id}', {'alt_text': alt_text, 'title': alt_text})
+        return media_id
+
+    def publish_post(self, title, content, slug, meta_description, status='publish',
+                     featured_media_id=None, meta_title=''):
         data = {
             'title': title,
             'content': content,
@@ -44,12 +51,17 @@ class WordPressClient:
         if featured_media_id:
             data['featured_media'] = featured_media_id
 
-        # Yoast SEO / RankMath meta via custom fields if available
+        # Yoast SEO / RankMath meta via custom fields (basic; works when meta keys are
+        # exposed via REST — no plugin install assumed).
+        meta = {}
         if meta_description:
-            data['meta'] = {
-                '_yoast_wpseo_metadesc': meta_description,
-                'rank_math_description': meta_description,
-            }
+            meta['_yoast_wpseo_metadesc'] = meta_description
+            meta['rank_math_description'] = meta_description
+        if meta_title:
+            meta['_yoast_wpseo_title'] = meta_title
+            meta['rank_math_title'] = meta_title
+        if meta:
+            data['meta'] = meta
 
         post = self._post('posts', data)
         return {
