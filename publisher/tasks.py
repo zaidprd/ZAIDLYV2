@@ -31,10 +31,16 @@ def run_publish_wordpress(job_id):
             except Exception:
                 pass
 
+        # Assemble content: article HTML + JSON-LD schema (basic impl, no plugin)
+        content = result.get('article_html', '')
+        schema = (result.get('schema_jsonld') or '').strip()
+        if schema:
+            content += f'\n<script type="application/ld+json">{schema}</script>'
+
         # Publish post
         wp_result = client.publish_post(
             title=job.title,
-            content=result.get('article_html', ''),
+            content=content,
             slug=result.get('slug', ''),
             meta_description=result.get('meta_description', ''),
             featured_media_id=featured_media_id,
