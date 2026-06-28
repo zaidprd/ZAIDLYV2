@@ -25,6 +25,34 @@
     1 kredit = 1 artikel. Kredit tidak kedaluwarsa.
   </div>
 
+  <!-- HPP / biaya produksi (PRD §8) -->
+  <div class="card">
+    <div style="padding:0.75rem 1.25rem; border-bottom:1px solid #1f2937;">
+      <h2 style="font-size:0.875rem; font-weight:600; color:#fff;">Biaya Produksi (HPP)</h2>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0.75rem; padding:1.25rem;">
+      <div style="text-align:center;">
+        <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.25rem;">Artikel</p>
+        <p style="font-size:1.25rem; font-weight:700; color:#e5e7eb;">{{ hpp.articles }}</p>
+      </div>
+      <div style="text-align:center;">
+        <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.25rem;">HPP rata-rata</p>
+        <p style="font-size:1.25rem; font-weight:700; color:#a78bfa;">${{ hpp.avg_cost_usd }}</p>
+      </div>
+      <div style="text-align:center;">
+        <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.25rem;">Total biaya</p>
+        <p style="font-size:1.25rem; font-weight:700; color:#e5e7eb;">${{ hpp.total_cost_usd }}</p>
+      </div>
+      <div style="text-align:center;">
+        <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.25rem;">Skor SEO</p>
+        <p style="font-size:1.25rem; font-weight:700; color:#6ee7b7;">{{ hpp.avg_quality }}</p>
+      </div>
+    </div>
+    <div style="padding:0 1.25rem 1rem; font-size:0.75rem; color:#6b7280;">
+      Rata-rata {{ hpp.avg_tokens_in }} token masuk / {{ hpp.avg_tokens_out }} token keluar · {{ hpp.avg_duration_s }}s per artikel.
+    </div>
+  </div>
+
   <!-- Transaction history -->
   <div class="card">
     <div style="padding:0.75rem 1.25rem; border-bottom:1px solid #1f2937;">

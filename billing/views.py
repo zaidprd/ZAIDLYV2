@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from .models import CreditTransaction
+from .analytics import hpp_summary
 
 
 @login_required
@@ -10,4 +11,5 @@ def credit_history(request):
         'transactions': transactions,
         'credits': request.user.credits,
         'credits_used': request.user.credits_used,
+        'hpp': hpp_summary(request.user),
     })
