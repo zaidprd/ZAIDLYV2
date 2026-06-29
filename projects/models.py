@@ -28,9 +28,24 @@ class Project(models.Model):
         (5000, '5000+ kata'),
     ]
 
+    GOAL_CHOICES = [
+        ('traffic', 'Traffic organik'),
+        ('leads', 'Leads'),
+        ('affiliate', 'Affiliate'),
+        ('ecommerce', 'Ecommerce'),
+        ('awareness', 'Brand awareness'),
+    ]
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='projects')
     name = models.CharField(max_length=200)
     language = models.CharField(max_length=10, choices=LANGUAGE_CHOICES, default='id')
+
+    # Business Profile — the only thing the user must provide; the engine does the rest.
+    website_url = models.URLField(blank=True, help_text='Opsional jika website baru.')
+    business_description = models.TextField(blank=True, help_text='Apa bisnisnya, produk/jasanya.')
+    niche = models.CharField(max_length=200, blank=True)
+    target_country = models.CharField(max_length=10, default='ID')
+    goal = models.CharField(max_length=20, choices=GOAL_CHOICES, default='traffic')
     target_audience = models.CharField(max_length=500, blank=True)
     tone = models.CharField(max_length=50, choices=TONE_CHOICES, default='informative')
     writing_style = models.CharField(max_length=20, choices=WRITING_STYLE_CHOICES, default='blog')
