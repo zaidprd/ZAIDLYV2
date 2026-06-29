@@ -115,6 +115,8 @@ class ContentPlanItem(models.Model):
     scheduled_at = models.DateTimeField(null=True, blank=True)
     queue_job = models.ForeignKey('queue_manager.QueueJob', on_delete=models.SET_NULL,
                                   null=True, blank=True, related_name='plan_item')
+    campaign = models.ForeignKey('Campaign', on_delete=models.SET_NULL, null=True,
+                                 blank=True, related_name='items')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -124,3 +126,47 @@ class ContentPlanItem(models.Model):
 
     def __str__(self):
         return self.chosen_title or self.keyword.keyword
+
+
+class Campaign(models.Model):
+    """A finished SEO strategy. AI mode runs the full pipeline; Manual mode takes
+    user-provided keywords/titles. Both feed the SAME article generator."""
+    MODE = [('ai', 'AI Campaign'), ('manual', 'Manual Import')]
+    STATUS = [
+        ('draft', 'Draft'),
+        ('building', 'Building'),
+        ('plan_ready', 'Plan Ready'),
+        ('running', 'Running'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    ]
+    project = models.ForeignKey('projects.Project', on_delete=models.CASCADE,
+                                related_name='campaigns')
+    name = models.CharField(max_length=200, blank=True)
+    mode = models.CharField(max_length=10, choices=MODE, default='ai')
+    goal = models.CharField(max_length=20, blank=True)
+    target_country = models.CharField(max_length=10, default='ID')
+    language = models.CharField(max_length=10, default='id')
+    status = models.CharField(max_length=20, choices=STATUS, default='draft')
+    articles_per_day = models.PositiveIntegerField(default=3)
+
+    planned_count = models.IntegerField(default=0)
+    generated_count = models.IntegerField(default=0)
+    published_count = models.IntegerField(default=0)
+    total_cost_usd = models.FloatField(default=0.0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.name or f"Campaign #{self.pk} ({self.project.name})"
+
+    def recompute_progress(self):
+        items = self.items.all()
+        self.planned_count = items.count()
+        self.generated_count = items.filter(status__in=['generated', 'published']).count()
+        self.published_count = items.filter(status='published').count()
+        self.save(update_fields=['planned_count', 'generated_count', 'published_count', 'updated_at'])
