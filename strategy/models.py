@@ -148,6 +148,7 @@ class Campaign(models.Model):
     target_country = models.CharField(max_length=10, default='ID')
     language = models.CharField(max_length=10, default='id')
     status = models.CharField(max_length=20, choices=STATUS, default='draft')
+    progress_step = models.CharField(max_length=20, default='queued', blank=True)
     articles_per_day = models.PositiveIntegerField(default=3)
 
     planned_count = models.IntegerField(default=0)
