@@ -65,7 +65,19 @@ class RunPlanItemTests(TestCase):
         self.assertEqual(self.c.status, 'completed')               # all items done
         self.assertEqual(self.c.generated_count, 1)
 
-    def test_start_campaign(self):
+    def test_start_campaign_creates_daily_schedule(self):
+        from django_q.models import Schedule
         execution.start_campaign(self.c)
         self.c.refresh_from_db()
         self.assertEqual(self.c.status, 'running')
+        sched = Schedule.objects.get(name=f'campaign-{self.c.id}')
+        self.assertEqual(sched.func, 'strategy.tasks.tick_campaign')
+        self.assertEqual(sched.args, str(self.c.id))
+        self.assertEqual(sched.schedule_type, Schedule.DAILY)
+
+    def test_completion_removes_schedule(self):
+        from django_q.models import Schedule
+        execution.start_campaign(self.c)
+        self.assertTrue(Schedule.objects.filter(name=f'campaign-{self.c.id}').exists())
+        execution.run_plan_item(self.item.id)            # only item -> campaign completes
+        self.assertFalse(Schedule.objects.filter(name=f'campaign-{self.c.id}').exists())

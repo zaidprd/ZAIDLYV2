@@ -10,9 +10,21 @@ from generator.tasks import run_generate_article
 from research.service import get_or_create_brief
 
 
+def _schedule_name(campaign):
+    return f'campaign-{campaign.id}'
+
+
 def start_campaign(campaign):
+    """Mark running and register a daily django_q Schedule for the drip."""
+    from django_q.models import Schedule
+
     campaign.status = 'running'
     campaign.save(update_fields=['status', 'updated_at'])
+    Schedule.objects.get_or_create(
+        name=_schedule_name(campaign),
+        defaults=dict(func='strategy.tasks.tick_campaign', args=str(campaign.id),
+                      schedule_type=Schedule.DAILY, repeats=-1),
+    )
     return campaign
 
 
@@ -76,4 +88,6 @@ def run_plan_item(item_id):
         if not campaign.items.filter(status__in=['planned', 'generating']).exists():
             campaign.status = 'completed'
             campaign.save(update_fields=['status', 'updated_at'])
+            from django_q.models import Schedule
+            Schedule.objects.filter(name=_schedule_name(campaign)).delete()
     return job.id
