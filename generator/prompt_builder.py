@@ -155,8 +155,34 @@ def _output_contract(spec):
     )
 
 
-def build_article_messages(spec: ArticleSpec):
-    """Assemble the chat messages for one SEO article generation."""
+def _research_block(brief):
+    """Inject SERP research so the article is written FROM data, not from memory.
+
+    Returns '' for an empty/stub brief, keeping behaviour identical until real
+    SERP grounding is wired in.
+    """
+    if brief is None or not getattr(brief, "is_grounded", False):
+        return ""
+    parts = ["RISET SERP (dasar penulisan — kalahkan pesaing dengan kelengkapan):"]
+    if brief.subtopics_required:
+        parts.append("- Sub-topik yang WAJIB dibahas: " + "; ".join(brief.subtopics_required))
+    if brief.entities:
+        parts.append("- Entity yang harus disebut: " + ", ".join(brief.entities))
+    if brief.paa:
+        parts.append("- Jawab pertanyaan People Also Ask ini: " + " | ".join(brief.paa))
+    if brief.semantic_keywords:
+        parts.append("- Sisipkan secara natural semantic keyword: " + ", ".join(brief.semantic_keywords))
+    if brief.median_word_count:
+        parts.append(f"- Panjang pesaing rata-rata ~{brief.median_word_count} kata; lampaui kelengkapannya.")
+    return "\n".join(parts)
+
+
+def build_article_messages(spec: ArticleSpec, brief=None):
+    """Assemble the chat messages for one SEO article generation.
+
+    `brief` (research.brief.ContentBrief) grounds the article in SERP findings
+    when present; omitted/empty -> classic behaviour.
+    """
     skeleton = STYLE_SKELETONS.get(spec.writing_style, STYLE_SKELETONS["blog"])
 
     system_parts = [
@@ -176,6 +202,10 @@ def build_article_messages(spec: ArticleSpec):
         system_parts.append(kw)
     if lsi:
         system_parts.append(lsi)
+
+    research = _research_block(brief)
+    if research:
+        system_parts.append(research)
 
     system_parts.append("ATURAN SEO:\n" + _seo_rules(spec))
     system_parts.append("ATURAN LINK:\n" + _link_rules(spec))
