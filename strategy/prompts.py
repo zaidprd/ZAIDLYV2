@@ -3,6 +3,27 @@
 LANG_NAMES = {"id": "Bahasa Indonesia", "en": "English"}
 
 
+def build_intelligence_messages(business_context, keywords):
+    """Ask the model to ANALYSE keywords (cluster + intent + business value).
+    It must NOT invent volume/CPC/difficulty — those are not requested."""
+    kw_list = "\n".join(f"- {k}" for k in keywords)
+    system = (
+        "Kamu adalah SEO strategist. ANALISIS daftar keyword di bawah untuk sebuah bisnis. "
+        "Tugasmu HANYA menganalisis — JANGAN mengarang angka volume pencarian, CPC, atau difficulty.\n\n"
+        "Untuk SETIAP keyword, tentukan:\n"
+        "- cluster: nama topic cluster yang ringkas (kelompokkan keyword sejenis)\n"
+        "- intent: salah satu dari informational/commercial/transactional/navigational\n"
+        "- business_value: integer 0-100, seberapa relevan & bernilai bagi bisnis ini\n\n"
+        "Keluarkan HANYA satu objek JSON valid (tanpa code fence):\n"
+        '{"keywords":[{"keyword":"...","cluster":"...","intent":"...","business_value":0}]}'
+    )
+    user = f"Konteks bisnis:\n{business_context}\n\nKeyword:\n{kw_list}"
+    return [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user},
+    ]
+
+
 def build_analysis_messages(profile, page_text=""):
     lang = LANG_NAMES.get(profile.get("language", "id"), profile.get("language", "id"))
     system = (

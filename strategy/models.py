@@ -41,9 +41,27 @@ class BusinessAnalysis(models.Model):
         return f"Analysis: {self.project.name}"
 
 
+class TopicCluster(models.Model):
+    """A group of related keywords (Keyword Intelligence, Batch 3)."""
+    project = models.ForeignKey('projects.Project', on_delete=models.CASCADE,
+                                related_name='clusters')
+    name = models.CharField(max_length=150)
+    intent = models.CharField(max_length=30, blank=True)
+    priority = models.FloatField(default=0.0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-priority', 'name']
+        unique_together = ('project', 'name')
+
+    def __str__(self):
+        return self.name
+
+
 class DiscoveredKeyword(models.Model):
     """A keyword candidate found from real data (no AI). Metrics stay null until a
-    real data provider (DataForSEO/Serper) fills them."""
+    real data provider (DataForSEO/Serper) fills them. Intelligence fields
+    (cluster/intent/business_value/priority_score) are set by Batch 3."""
     project = models.ForeignKey('projects.Project', on_delete=models.CASCADE,
                                 related_name='discovered_keywords')
     keyword = models.CharField(max_length=255)
@@ -55,12 +73,19 @@ class DiscoveredKeyword(models.Model):
     cpc = models.FloatField(null=True, blank=True)
     intent = models.CharField(max_length=30, blank=True)
 
+    # Keyword Intelligence (Batch 3) — AI analysis only
+    cluster = models.ForeignKey(TopicCluster, on_delete=models.SET_NULL, null=True,
+                                blank=True, related_name='keywords')
+    search_intent = models.CharField(max_length=30, blank=True)
+    business_value = models.IntegerField(null=True, blank=True)   # 0-100, null if unanalyzed
+    priority_score = models.FloatField(default=0.0)
+
     confidence = models.FloatField(default=0.5)
     notes = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['keyword']
+        ordering = ['-priority_score', 'keyword']
         unique_together = ('project', 'keyword')
 
     def __str__(self):
