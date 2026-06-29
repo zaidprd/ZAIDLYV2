@@ -8,4 +8,7 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     path('register/', views.register, name='register'),
     path('profile/', views.profile, name='profile'),
+    path('threads/connect/', views.threads_connect, name='threads_connect'),
+    path('threads/callback/', views.threads_callback, name='threads_callback'),
+    path('threads/disconnect/', views.threads_disconnect, name='threads_disconnect'),
 ]
