@@ -40,12 +40,17 @@ def queue_action(request, pk, action):
     job = get_object_or_404(QueueJob, pk=pk, user=request.user)
 
     if action == 'retry' and job.can_retry:
+        from django_q.tasks import async_task
         job.status = QueueJob.PENDING
         job.retry_count += 1
         job.error_message = ''
         job.started_at = None
         job.completed_at = None
         job.save()
+        task = ('generator.tasks.run_generate_article'
+                if job.job_type == QueueJob.TYPE_GENERATE
+                else 'publisher.tasks.run_publish_wordpress')
+        async_task(task, job.id)
     elif action == 'pause' and job.status == QueueJob.PENDING:
         job.status = QueueJob.PAUSED
         job.save(update_fields=['status', 'updated_at'])
@@ -70,12 +75,15 @@ def queue_status_poll(request, pk):
 @login_required
 def dashboard_summary(request):
     jobs = QueueJob.objects.filter(user=request.user)
+    # 'Published' = articles actually live on WordPress (publish-type jobs that finished).
+    # Generate-type 'PUBLISHED' just means the article is ready, not posted.
     context = {
         'user': request.user,
         'total_jobs': jobs.count(),
         'pending': jobs.filter(status=QueueJob.PENDING).count(),
         'processing': jobs.filter(status=QueueJob.PROCESSING).count(),
-        'published': jobs.filter(status=QueueJob.PUBLISHED).count(),
+        'generated': jobs.filter(job_type=QueueJob.TYPE_GENERATE, status=QueueJob.PUBLISHED).count(),
+        'published': jobs.filter(job_type=QueueJob.TYPE_PUBLISH, status=QueueJob.PUBLISHED).count(),
         'failed': jobs.filter(status=QueueJob.FAILED).count(),
         'projects_count': request.user.projects.count(),
         'recent_jobs': jobs[:5],
