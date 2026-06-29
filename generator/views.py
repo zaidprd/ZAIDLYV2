@@ -108,9 +108,27 @@ def _collect_options(request):
     style = request.POST.get('writing_style', '').strip()
     if style:
         options['writing_style'] = style
+    goal = request.POST.get('goal', '').strip()
+    if goal:
+        options['goal'] = goal
+    cta = request.POST.get('cta', '').strip()
+    if cta:
+        options['cta'] = cta
+    image_style = request.POST.get('image_style', '').strip()
+    if image_style:
+        options['image_style'] = image_style
     secondary = csv('secondary_keywords')
     if secondary:
         options['secondary_keywords'] = secondary
+    lsi = csv('lsi_keywords')
+    if lsi:
+        options['lsi_keywords'] = lsi
+    internal = csv('internal_links')
+    if internal:
+        options['internal_links'] = internal
+    external = csv('external_links')
+    if external:
+        options['external_links'] = external
     options['faq'] = bool(request.POST.get('faq', '').strip())
     return options
 
