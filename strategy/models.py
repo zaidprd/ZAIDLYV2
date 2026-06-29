@@ -90,3 +90,37 @@ class DiscoveredKeyword(models.Model):
 
     def __str__(self):
         return self.keyword
+
+
+class ContentPlanItem(models.Model):
+    """One row of the reviewable Content Plan: a keyword + chosen title + priority.
+    Same item feeds the SHARED article generator (manual or AI campaign)."""
+    STATUS = [
+        ('planned', 'Planned'),
+        ('generating', 'Generating'),
+        ('generated', 'Generated'),
+        ('published', 'Published'),
+        ('failed', 'Failed'),
+    ]
+    project = models.ForeignKey('projects.Project', on_delete=models.CASCADE,
+                                related_name='plan_items')
+    keyword = models.ForeignKey(DiscoveredKeyword, on_delete=models.CASCADE,
+                                related_name='plan_items')
+    cluster = models.ForeignKey(TopicCluster, on_delete=models.SET_NULL, null=True,
+                                blank=True, related_name='plan_items')
+    chosen_title = models.CharField(max_length=300)
+    alt_titles = models.JSONField(default=list, blank=True)
+    priority = models.FloatField(default=0.0)
+    status = models.CharField(max_length=20, choices=STATUS, default='planned')
+    scheduled_at = models.DateTimeField(null=True, blank=True)
+    queue_job = models.ForeignKey('queue_manager.QueueJob', on_delete=models.SET_NULL,
+                                  null=True, blank=True, related_name='plan_item')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-priority']
+        unique_together = ('project', 'keyword')
+
+    def __str__(self):
+        return self.chosen_title or self.keyword.keyword
