@@ -5,7 +5,7 @@ from accounts.models import User
 from projects.models import Project
 from strategy.discovery import http, collectors
 from strategy.discovery.collectors import WebsiteCollector, SitemapCollector, CategoryCollector, BlogCollector
-from strategy.discovery.pipeline import DiscoveryPipeline
+from strategy.discovery.pipeline import DiscoveryPipeline, discover_keywords
 from strategy.models import DiscoveredKeyword
 
 
@@ -104,3 +104,15 @@ class PipelineTests(TestCase):
         n1 = DiscoveredKeyword.objects.count()
         DiscoveryPipeline().run(self.p)
         self.assertEqual(DiscoveredKeyword.objects.count(), n1)
+
+    def test_discover_keywords_uses_cache(self):
+        DiscoveredKeyword.objects.create(project=self.p, keyword='cached kw', source='website')
+        # cache hit: must NOT call collectors/http
+        collectors.http.fetch = lambda *a, **k: (_ for _ in ()).throw(AssertionError('fetched!'))
+        result = discover_keywords(self.p)              # refresh=False
+        self.assertTrue(any(k.keyword == 'cached kw' for k in result))
+
+    def test_discover_keywords_refresh_runs_pipeline(self):
+        DiscoveredKeyword.objects.create(project=self.p, keyword='old', source='website')
+        discover_keywords(self.p, refresh=True)         # re-runs with mocked fetch
+        self.assertTrue(DiscoveredKeyword.objects.filter(project=self.p).count() > 1)

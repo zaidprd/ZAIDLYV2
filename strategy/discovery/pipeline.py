@@ -10,6 +10,15 @@ DEFAULT_COLLECTORS = [
 ]
 
 
+def discover_keywords(project, *, refresh=False):
+    """Cached discovery: reuse stored keywords unless `refresh` is requested."""
+    from strategy.models import DiscoveredKeyword
+    existing = DiscoveredKeyword.objects.filter(project=project)
+    if not refresh and existing.exists():
+        return list(existing)               # cache hit — no re-discovery, no requests
+    return DiscoveryPipeline().run(project)
+
+
 class DiscoveryPipeline:
     def __init__(self, collectors=None):
         self.collectors = [c() for c in (collectors or DEFAULT_COLLECTORS)]

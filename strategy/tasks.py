@@ -1,7 +1,7 @@
 """django_q task entrypoints for the Strategy Engine (single queue, no new system)."""
 
 
-def run_build_ai_campaign(campaign_id, model=None, limit=20):
+def run_build_ai_campaign(campaign_id, model=None, limit=20, refresh=False):
     """Heavy campaign build, run on the django_q worker."""
     from .models import Campaign
     from .campaign import build_ai_campaign
@@ -10,7 +10,7 @@ def run_build_ai_campaign(campaign_id, model=None, limit=20):
         campaign = Campaign.objects.select_related('project').get(pk=campaign_id)
     except Campaign.DoesNotExist:
         return
-    build_ai_campaign(campaign.project, campaign=campaign, model=model, limit=limit)
+    build_ai_campaign(campaign.project, campaign=campaign, model=model, limit=limit, refresh=refresh)
     return campaign_id
 
 

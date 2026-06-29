@@ -33,17 +33,16 @@ class AiCampaignTests(TestCase):
         self.p = Project.objects.create(user=self.u, name='Panel', goal='traffic')
 
         # stub the whole pipeline — this is an orchestration test
-        self._orig = (camp.analyze_business, camp.DiscoveryPipeline,
+        self._orig = (camp.analyze_business, camp.discover_keywords,
                       camp.analyze_keywords, camp.build_content_plan)
 
         camp.analyze_business = lambda project, **k: None
 
-        class FakePipeline:
-            def run(self, project, save=True):
-                DiscoveredKeyword.objects.create(project=project, keyword='panel listrik',
-                                                 source='website', business_value=90, priority_score=88.0)
-                return []
-        camp.DiscoveryPipeline = FakePipeline
+        def fake_discover(project, **k):
+            DiscoveredKeyword.objects.create(project=project, keyword='panel listrik',
+                                             source='website', business_value=90, priority_score=88.0)
+            return []
+        camp.discover_keywords = fake_discover
         camp.analyze_keywords = lambda project, **k: {'clusters': 1, 'keywords': 1}
 
         def fake_plan(project, **k):
@@ -55,7 +54,7 @@ class AiCampaignTests(TestCase):
         camp.build_content_plan = fake_plan
 
     def tearDown(self):
-        (camp.analyze_business, camp.DiscoveryPipeline,
+        (camp.analyze_business, camp.discover_keywords,
          camp.analyze_keywords, camp.build_content_plan) = self._orig
 
     def test_ai_campaign_orchestrates_and_links(self):

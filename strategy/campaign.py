@@ -7,12 +7,12 @@ ContentPlanItem rows for the SAME article generator (Batch 6 executes them).
 from django_q.tasks import async_task
 
 from .analyzer import analyze_business
-from .discovery.pipeline import DiscoveryPipeline
+from .discovery.pipeline import discover_keywords
 from .intelligence import analyze_keywords
 from .planner import build_content_plan
 
 
-def start_ai_campaign(project, *, name='', articles_per_day=3, limit=20, model=None):
+def start_ai_campaign(project, *, name='', articles_per_day=3, limit=20, model=None, refresh=False):
     """Create the campaign and queue the heavy build on django_q. Returns instantly."""
     from .models import Campaign
 
@@ -21,7 +21,7 @@ def start_ai_campaign(project, *, name='', articles_per_day=3, limit=20, model=N
         target_country=project.target_country, language=project.language,
         status='building', progress_step='queued', articles_per_day=articles_per_day,
     )
-    async_task('strategy.tasks.run_build_ai_campaign', campaign.id, model, limit)
+    async_task('strategy.tasks.run_build_ai_campaign', campaign.id, model, limit, refresh)
     return campaign
 
 
@@ -45,7 +45,7 @@ def build_ai_campaign(project, *, name='', articles_per_day=3, limit=20, model=N
         step('analyzing')
         analyze_business(project)                       # Batch 1
         step('discovering')
-        DiscoveryPipeline().run(project)                # Batch 2
+        discover_keywords(project, refresh=refresh)     # Batch 2 (cached)
         analyze_keywords(project, model=model)          # Batch 3
         step('planning')
         items = build_content_plan(project, limit=limit, model=model)  # Batch 4
