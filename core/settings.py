@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     'accounts',
     'projects',
     'queue_manager',
+    'research',
     'generator',
     'publisher',
     'billing',
