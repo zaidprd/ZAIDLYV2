@@ -6,14 +6,30 @@ cost basis. Replace with real SumoPod rates once confirmed — these are the onl
 numbers to touch, no business logic depends on the values.
 """
 
-# model -> (input_usd_per_1m, output_usd_per_1m)
+# model -> (input_usd_per_1m, output_usd_per_1m). SumoPod rates (per their Models page).
 TEXT_PRICES = {
+    # OpenAI
     'gpt-4o-mini': (0.15, 0.60),
     'gpt-4o': (2.50, 10.00),
     'gpt-4.1': (2.00, 8.00),
     'gpt-4.1-mini': (0.40, 1.60),
     'gpt-4.1-nano': (0.10, 0.40),
+    'gpt-5-mini': (0.25, 2.00),
+    'gpt-5-nano': (0.05, 0.40),
     'o4-mini': (1.10, 4.40),
+    # Anthropic
+    'claude-sonnet-4-6': (3.00, 15.00),
+    'claude-haiku-4-5': (1.00, 5.00),
+    # Google
+    'gemini/gemini-2.5-flash': (0.30, 2.50),
+    'gemini-2.5-flash': (0.30, 2.50),
+    'gemini/gemini-2.5-flash-lite': (0.10, 0.40),
+    'gemini-2.5-flash-lite': (0.10, 0.40),
+    # Cheap test models
+    'deepseek-v4-flash': (0.14, 0.28),
+    'mimo-v2.5': (0.14, 0.28),
+    'qwen3.7-plus': (0.32, 1.28),
+    'MiniMax-M2.7-highspeed': (0.03, 0.12),
 }
 
 # image model -> {size: usd_per_image}

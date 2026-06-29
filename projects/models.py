@@ -37,7 +37,8 @@ class Project(models.Model):
     default_length = models.PositiveIntegerField(choices=LENGTH_CHOICES, default=1500)
     brand_voice = models.TextField(blank=True, help_text='Karakter/gaya brand yang harus tercermin di artikel.')
     default_cta = models.CharField(max_length=300, blank=True, help_text='Call-to-action default di akhir artikel.')
-    ai_model = models.CharField(max_length=100, default='gpt-4o-mini')
+    ai_model = models.CharField(max_length=100, blank=True, default='',
+                                help_text='Kosongkan untuk pakai default sistem (AI_DEFAULT_MODEL di .env).')
     auto_publish = models.BooleanField(default=False)
     schedule_times = models.CharField(
         max_length=100, blank=True,

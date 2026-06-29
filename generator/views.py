@@ -38,7 +38,7 @@ def generate_titles(request):
             target_audience=project.target_audience,
             writing_style=project.writing_style,
         )
-        raw = generate_text(messages, model=project.ai_model, max_tokens=800, temperature=0.8)
+        raw = generate_text(messages, model=project.ai_model or None, max_tokens=800, temperature=0.8)
         titles = _parse_titles(raw)
     except Exception as e:
         return HttpResponse(f'<p class="text-red-400 text-sm">Gagal generate judul: {e}</p>')

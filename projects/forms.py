@@ -15,7 +15,7 @@ class ProjectForm(forms.ModelForm):
             'target_audience': forms.TextInput(attrs={'placeholder': 'Contoh: Pengusaha UMKM 25-45 tahun', 'class': INPUT_CLASS}),
             'brand_voice': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Contoh: ramah, berbasis dalil, menghindari bahasa hiperbola', 'class': INPUT_CLASS}),
             'default_cta': forms.TextInput(attrs={'placeholder': 'Contoh: Hubungi kami untuk konsultasi gratis', 'class': INPUT_CLASS}),
-            'ai_model': forms.TextInput(attrs={'placeholder': 'gpt-4o-mini', 'class': INPUT_CLASS}),
+            'ai_model': forms.TextInput(attrs={'placeholder': 'kosongkan = default .env', 'class': INPUT_CLASS}),
             'schedule_times': forms.TextInput(attrs={'placeholder': '08:00,13:00,20:00', 'class': INPUT_CLASS}),
             'daily_limit': forms.NumberInput(attrs={'min': 0, 'class': INPUT_CLASS}),
         }

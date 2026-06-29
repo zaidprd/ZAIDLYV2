@@ -46,7 +46,7 @@ def run_generate_article(job_id):
                 target_audience=project.target_audience,
                 writing_style=opts.get('writing_style') or project.writing_style,
             )
-            titles = _parse_titles(generate(t_messages, model=project.ai_model, max_tokens=600, temperature=0.7).text)
+            titles = _parse_titles(generate(t_messages, model=project.ai_model or None, max_tokens=600, temperature=0.7).text)
             job.title = titles[0] if titles else job.keyword
             job.save(update_fields=['title', 'updated_at'])
 
@@ -85,7 +85,7 @@ def run_generate_article(job_id):
             return s, seo
 
         # Initial generation
-        gen = generate(build_article_messages(spec), model=project.ai_model, max_tokens=max_tok)
+        gen = generate(build_article_messages(spec), model=project.ai_model or None, max_tokens=max_tok)
         model_used, tot_in, tot_out, tot_ms = gen.model, gen.tokens_in, gen.tokens_out, gen.duration_ms
         fallback_used = gen.fallback_used
         output_text = gen.text
@@ -95,7 +95,7 @@ def run_generate_article(job_id):
         revisions = 0
         while not seo['passed'] and revisions < max_revisions:
             rgen = generate(build_revision_messages(spec, output_text, seo['failures']),
-                            model=project.ai_model, max_tokens=max_tok)
+                            model=project.ai_model or None, max_tokens=max_tok)
             tot_in += rgen.tokens_in
             tot_out += rgen.tokens_out
             tot_ms += rgen.duration_ms
