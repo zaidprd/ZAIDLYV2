@@ -39,3 +39,29 @@ class BusinessAnalysis(models.Model):
 
     def __str__(self):
         return f"Analysis: {self.project.name}"
+
+
+class DiscoveredKeyword(models.Model):
+    """A keyword candidate found from real data (no AI). Metrics stay null until a
+    real data provider (DataForSEO/Serper) fills them."""
+    project = models.ForeignKey('projects.Project', on_delete=models.CASCADE,
+                                related_name='discovered_keywords')
+    keyword = models.CharField(max_length=255)
+    source = models.CharField(max_length=30)            # website | sitemap | category
+    page_source = models.CharField(max_length=500, blank=True)
+
+    volume = models.IntegerField(null=True, blank=True)
+    difficulty = models.FloatField(null=True, blank=True)
+    cpc = models.FloatField(null=True, blank=True)
+    intent = models.CharField(max_length=30, blank=True)
+
+    confidence = models.FloatField(default=0.5)
+    notes = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['keyword']
+        unique_together = ('project', 'keyword')
+
+    def __str__(self):
+        return self.keyword
