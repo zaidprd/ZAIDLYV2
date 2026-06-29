@@ -35,6 +35,9 @@ def _build_provider() -> AIProvider:
     if name == 'openai_compatible':
         from ai_service.providers.openai_compatible import OpenAICompatibleProvider
         return OpenAICompatibleProvider()
+    if name == 'mock':
+        from ai_service.providers.mock import MockProvider
+        return MockProvider()
     raise AIServiceError(f"Unknown AI_PROVIDER: {name!r}")
 
 
