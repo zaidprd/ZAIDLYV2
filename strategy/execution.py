@@ -7,6 +7,7 @@ from django_q.tasks import async_task
 
 from queue_manager.models import QueueJob
 from generator.tasks import run_generate_article
+from research.service import get_or_create_brief
 
 
 def start_campaign(campaign):
@@ -39,14 +40,29 @@ def run_plan_item(item_id):
     project = item.project
     site = project.sites.filter(is_active=True).first()
 
+    # Cached SERP research — reused if already done for this keyword (no wasted tokens).
+    options = {}
+    brief = None
+    try:
+        brief = get_or_create_brief(item.keyword.keyword, project=project, language=project.language)
+    except Exception:
+        brief = None
+    if brief:
+        if brief.lsi_keywords:
+            options['secondary_keywords'] = list(brief.lsi_keywords)[:8]
+        if brief.entities:
+            options['lsi_keywords'] = list(brief.entities)[:10]
+        options['faq'] = bool(brief.faq)
+
     job = QueueJob.objects.create(
         user=project.user, project=project, site=site,
         job_type=QueueJob.TYPE_GENERATE,
         keyword=item.keyword.keyword, title=item.chosen_title,
-        options={}, status=QueueJob.PENDING,
+        options=options, status=QueueJob.PENDING,
     )
     item.queue_job = job
-    item.save(update_fields=['queue_job', 'updated_at'])
+    item.content_brief = brief
+    item.save(update_fields=['queue_job', 'content_brief', 'updated_at'])
 
     run_generate_article(job.id)          # reuse existing generator + quality gate + publish
 

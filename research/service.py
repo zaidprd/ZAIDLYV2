@@ -40,6 +40,20 @@ def run_research(keyword, *, project=None, user=None, language=None, model=None,
     )
 
 
+def get_or_create_brief(keyword, *, project=None, user=None, language='id',
+                        max_age_days=30, model=None):
+    """Return a cached fresh ContentBrief for the keyword, else research it once.
+    Avoids spending AI tokens re-researching the same keyword."""
+    import datetime
+    from django.utils import timezone
+
+    brief = latest_brief(keyword, language=language, project=project)
+    if brief and (max_age_days <= 0 or
+                  brief.created_at >= timezone.now() - datetime.timedelta(days=max_age_days)):
+        return brief                                   # cache hit
+    return run_research(keyword, project=project, user=user, language=language, model=model)
+
+
 def latest_brief(keyword, language='id', project=None):
     """Return the most recent stored brief for a keyword (knowledge-base reuse)."""
     from .models import ContentBrief

@@ -79,3 +79,11 @@ class RunResearchTests(TestCase):
         res = service.run_research('sholat dhuha', project=self.p, save=False)
         self.assertEqual(res.search_intent, 'informational')
         self.assertEqual(ContentBrief.objects.count(), 0)
+
+    def test_get_or_create_brief_uses_cache(self):
+        first = service.run_research('sholat dhuha', project=self.p, user=self.u)
+        # cache hit: research must NOT be called again
+        llm.generate = lambda *a, **k: (_ for _ in ()).throw(AssertionError('researched again!'))
+        cached = service.get_or_create_brief('sholat dhuha', project=self.p, language='id')
+        self.assertEqual(cached.pk, first.pk)
+        self.assertEqual(ContentBrief.objects.count(), 1)

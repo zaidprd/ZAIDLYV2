@@ -117,6 +117,8 @@ class ContentPlanItem(models.Model):
                                   null=True, blank=True, related_name='plan_item')
     campaign = models.ForeignKey('Campaign', on_delete=models.SET_NULL, null=True,
                                  blank=True, related_name='items')
+    content_brief = models.ForeignKey('research.ContentBrief', on_delete=models.SET_NULL,
+                                      null=True, blank=True, related_name='plan_items')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -35,6 +35,11 @@ class RunPlanItemTests(TestCase):
         self.p = Project.objects.create(user=self.u, name='Toko')
         self.c = build_manual_campaign(self.p, [{'keyword': 'ban mobil', 'title': 'Ban Mobil Terbaik'}])
         self.item = ContentPlanItem.objects.get(campaign=self.c)
+        # pre-seed a cached brief so get_or_create_brief is a cache hit (no AI call)
+        from research.models import ContentBrief
+        ContentBrief.objects.create(project=self.p, keyword='ban mobil', language='id',
+                                    lsi_keywords=['ban radial'], entities=['ban mobil'],
+                                    faq=[{'question': 'q', 'answer': 'a'}])
 
         # mock the existing generator: just mark the created job done
         self._orig = execution.run_generate_article
@@ -53,6 +58,8 @@ class RunPlanItemTests(TestCase):
         self.item.refresh_from_db()
         self.assertIsNotNone(self.item.queue_job)                  # job created + linked
         self.assertEqual(self.item.queue_job.title, 'Ban Mobil Terbaik')
+        self.assertIsNotNone(self.item.content_brief)              # cached brief linked
+        self.assertEqual(self.item.queue_job.options.get('secondary_keywords'), ['ban radial'])
         self.assertEqual(self.item.status, 'generated')
         self.c.refresh_from_db()
         self.assertEqual(self.c.status, 'completed')               # all items done
