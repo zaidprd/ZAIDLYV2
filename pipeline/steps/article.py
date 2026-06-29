@@ -4,9 +4,16 @@ This is where the prompt finally enters the pipeline — deliberately near the e
 The spec is built from project defaults + per-generation overrides, and the prompt
 is grounded in ctx.brief (no-op while the brief is a stub).
 """
+from decouple import config
+
 from ..base import Step
 from generator.prompt_builder import article_spec_from_project, build_article_messages
 from generator.parsing import parse_article_output
+
+
+def _article_temperature():
+    """Lower default favours consistency (the model strategy goal)."""
+    return config('AI_ARTICLE_TEMPERATURE', default=0.6, cast=float)
 
 
 def _max_tokens_for(length):
@@ -44,6 +51,7 @@ class ArticleStep(Step):
             build_article_messages(spec, brief=ctx.brief),
             model=project.ai_model,
             max_tokens=ctx.max_tokens,
+            temperature=_article_temperature(),
         )
         ctx.add_usage(gen)
         ctx.output_text = gen.text

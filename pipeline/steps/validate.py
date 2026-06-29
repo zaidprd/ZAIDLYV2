@@ -45,6 +45,7 @@ class ValidateStep(Step):
                 build_revision_messages(spec, ctx.output_text, seo['failures']),
                 model=project.ai_model,
                 max_tokens=ctx.max_tokens,
+                temperature=config('AI_ARTICLE_TEMPERATURE', default=0.6, cast=float),
             )
             ctx.add_usage(rgen)
             revisions += 1

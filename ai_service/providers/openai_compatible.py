@@ -48,6 +48,10 @@ class OpenAICompatibleProvider(AIProvider):
             resp.raise_for_status()
             data = resp.json()
             text = data['choices'][0]['message']['content'].strip()
+            if not text:
+                # Treat an empty completion as a failure so the service layer
+                # retries / falls back to the next model instead of shipping nothing.
+                raise AIServiceError("empty completion")
             usage = data.get('usage') or {}
             return GenerationResult(
                 text=text,
