@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Beli Kredit — SEO.Zaidly{% endblock %}
+{% block page_title %}Beli Kredit{% endblock %}
+{% block content %}
+<div class="max-w-3xl space-y-5">
+
+  <p style="font-size:0.875rem; color:#9ca3af;">Pilih paket. 1 kredit = 1 artikel. Kredit tidak kedaluwarsa.</p>
+
+  {% if provider == 'mock' %}
+  <div style="padding:0.625rem 0.875rem; background:rgba(120,53,15,0.3); border:1px solid rgba(120,53,15,0.5); border-radius:0.5rem; font-size:0.75rem; color:#fcd34d;">
+    Mode pembayaran: <strong>mock</strong>. Klik beli akan membuka simulasi checkout (tanpa biaya). Aktifkan provider sungguhan dengan PAYMENT_PROVIDER=mayar.
+  </div>
+  {% endif %}
+
+  {% if packages %}
+  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:0.875rem;">
+    {% for pkg in packages %}
+    <div class="card" style="padding:1.25rem; display:flex; flex-direction:column; gap:0.75rem; {% if pkg.is_popular %}border-color:#7c3aed;{% endif %}">
+      {% if pkg.is_popular %}
+      <span class="badge" style="background:rgba(124,58,237,0.25); color:#c4b5fd; align-self:flex-start;">Paling Populer</span>
+      {% endif %}
+      <div>
+        <p style="font-size:0.875rem; font-weight:600; color:#fff;">{{ pkg.name }}</p>
+        <p style="font-size:0.75rem; color:#6b7280;">{{ pkg.credits }} kredit · Rp{{ pkg.price_per_credit|floatformat:0 }}/kredit</p>
+      </div>
+      <p style="font-size:1.5rem; font-weight:700; color:#a78bfa;">Rp{{ pkg.price_idr|stringformat:"d" }}</p>
+      <form method="post" action="{% url 'package_checkout' pkg.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Beli</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card" style="padding:2rem; text-align:center; color:#6b7280; font-size:0.875rem;">
+    Belum ada paket. Jalankan <code>manage.py seed_packages</code> untuk mengisi paket bawaan.
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
