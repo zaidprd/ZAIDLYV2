@@ -1,0 +1,39 @@
+{# Strip progres "menuju ranking" — bukan step generic, tapi journey artikel sampai live di Google.
+   Phase: research (pending), writing (processing), seo (published-generate-no-publish), live (publish job done).
+   Tampil hanya di halaman result generate; fokus prinsip produk: customer beli traffic Google, bukan jumlah job. #}
+<div style="display:flex; align-items:center; gap:0.5rem; padding:0.875rem 1rem; background:#1f2937; border-radius:0.5rem; font-size:0.75rem;">
+  {% with phase=phase|default:"writing" %}
+
+  {# Step 1 — riset #}
+  <div style="display:flex; align-items:center; gap:0.375rem;
+              color:{% if phase == 'research' %}#a78bfa{% elif phase == 'writing' or phase == 'seo' or phase == 'live' %}#6ee7b7{% else %}#6b7280{% endif %};">
+    <span>{% if phase == 'research' %}●{% elif phase == 'writing' or phase == 'seo' or phase == 'live' %}✓{% else %}○{% endif %}</span>
+    <span>Riset</span>
+  </div>
+  <div style="flex:1; height:1px; background:#374151;"></div>
+
+  {# Step 2 — tulis #}
+  <div style="display:flex; align-items:center; gap:0.375rem;
+              color:{% if phase == 'writing' %}#a78bfa{% elif phase == 'seo' or phase == 'live' %}#6ee7b7{% else %}#6b7280{% endif %};">
+    <span>{% if phase == 'writing' %}●{% elif phase == 'seo' or phase == 'live' %}✓{% else %}○{% endif %}</span>
+    <span>Tulis artikel</span>
+  </div>
+  <div style="flex:1; height:1px; background:#374151;"></div>
+
+  {# Step 3 — cek SEO #}
+  <div style="display:flex; align-items:center; gap:0.375rem;
+              color:{% if phase == 'seo' %}#a78bfa{% elif phase == 'live' %}#6ee7b7{% else %}#6b7280{% endif %};">
+    <span>{% if phase == 'seo' %}●{% elif phase == 'live' %}✓{% else %}○{% endif %}</span>
+    <span>Cek SEO</span>
+  </div>
+  <div style="flex:1; height:1px; background:#374151;"></div>
+
+  {# Step 4 — live di Google #}
+  <div style="display:flex; align-items:center; gap:0.375rem;
+              color:{% if phase == 'live' %}#6ee7b7{% else %}#6b7280{% endif %};">
+    <span>{% if phase == 'live' %}✓{% else %}○{% endif %}</span>
+    <span>Live di Google</span>
+  </div>
+
+  {% endwith %}
+</div>

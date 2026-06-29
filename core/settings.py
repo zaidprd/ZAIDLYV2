@@ -46,6 +46,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.app_meta',
             ],
         },
     },
@@ -96,7 +97,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 Q_CLUSTER = {
-    'name': 'hermes',
+    'name': 'seozaidly',
     'workers': 2,
     'timeout': 300,
     'retry': 360,

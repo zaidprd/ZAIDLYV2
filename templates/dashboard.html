@@ -4,77 +4,84 @@
 {% block content %}
 <div class="max-w-4xl space-y-6">
 
-  <!-- Stats -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-    {% with stats=total_jobs|default:0 %}
-    <div class="card p-4">
-      <p class="text-xs text-gray-500 mb-1">Total Jobs</p>
-      <p class="text-2xl font-semibold text-white">{{ total_jobs }}</p>
+  {% if not onboarding_done %}
+  <!-- Onboarding: 3 langkah menuju artikel pertama yang live di Google -->
+  <div class="card" style="padding:1.25rem 1.5rem;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+      <div>
+        <p style="font-size:0.9375rem; font-weight:600; color:#fff;">Mulai mendapat traffic dari Google</p>
+        <p style="font-size:0.8125rem; color:#9ca3af; margin-top:0.125rem;">Tiga langkah singkat sampai artikel pertamamu live di WordPress.</p>
+      </div>
     </div>
-    <div class="card p-4">
-      <p class="text-xs text-gray-500 mb-1">Artikel Selesai</p>
-      <p class="text-2xl font-semibold text-emerald-400">{{ generated }}</p>
+
+    <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:1rem;">
+
+      {% include "components/onboarding_step.html" with num="1" title="Buat project" desc="Atur bahasa, tone, target audience — agar setiap artikel sesuai brand." url_name="project_new" cta="Buat project" done=step_project_done %}
+
+      {% include "components/onboarding_step.html" with num="2" title="Hubungkan situs WordPress" desc="Tanpa ini, artikel tidak bisa otomatis live di Google." url_name="project_list" cta="Tambah WordPress site" done=step_site_done locked=site_step_locked %}
+
+      {% include "components/onboarding_step.html" with num="3" title="Generate artikel pertama" desc="Riset → tulis → cek SEO → publish ke WordPress, semua otomatis." url_name="generate_new" cta="Generate sekarang" done=step_article_done locked=article_step_locked %}
+
     </div>
-    <div class="card p-4">
-      <p class="text-xs text-gray-500 mb-1">Published ke WP</p>
-      <p class="text-2xl font-semibold text-violet-400">{{ published }}</p>
+  </div>
+  {% endif %}
+
+  <!-- Stats: angka penting customer (traffic-ready vs live di WP, bukan job count) -->
+  <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:0.75rem;">
+    <div class="card" style="padding:1rem;">
+      <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.25rem;">Artikel siap-publish</p>
+      <p style="font-size:1.5rem; font-weight:700; color:#6ee7b7;">{{ generated }}</p>
     </div>
-    <div class="card p-4">
-      <p class="text-xs text-gray-500 mb-1">Gagal</p>
-      <p class="text-2xl font-semibold text-red-400">{{ failed }}</p>
+    <div class="card" style="padding:1rem;">
+      <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.25rem;">Live di Google</p>
+      <p style="font-size:1.5rem; font-weight:700; color:#a78bfa;">{{ published }}</p>
     </div>
-    {% endwith %}
+    <div class="card" style="padding:1rem;">
+      <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.25rem;">Antrian</p>
+      <p style="font-size:1.5rem; font-weight:700; color:#e5e7eb;">{{ pending }}</p>
+    </div>
+    <div class="card" style="padding:1rem;">
+      <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.25rem;">Gagal</p>
+      <p style="font-size:1.5rem; font-weight:700; color:#f87171;">{{ failed }}</p>
+    </div>
   </div>
 
-  <!-- Quick actions -->
-  <div class="grid grid-cols-3 gap-3">
-    <a href="{% url 'generate_new' %}" class="card p-5 hover:border-violet-500/50 transition-colors group">
-      <div class="w-9 h-9 rounded-lg bg-violet-600/20 flex items-center justify-center mb-3 group-hover:bg-violet-600/30 transition-colors">
-        <svg class="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-      </div>
-      <p class="text-sm font-medium text-white">Generate Artikel</p>
-      <p class="text-xs text-gray-500 mt-0.5">Keyword → Judul → Artikel SEO</p>
+  <!-- Quick actions: hanya tampilkan kalau onboarding sudah selesai (tidak ganggu pemula) -->
+  {% if onboarding_done %}
+  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0.75rem;">
+    <a href="{% url 'generate_new' %}" class="card" style="padding:1.25rem; text-decoration:none;">
+      <p style="font-size:0.875rem; font-weight:500; color:#fff;">Generate Artikel</p>
+      <p style="font-size:0.75rem; color:#6b7280; margin-top:0.25rem;">1 keyword → 1 artikel siap ranking</p>
     </a>
-    <a href="{% url 'project_new' %}" class="card p-5 hover:border-violet-500/50 transition-colors group">
-      <div class="w-9 h-9 rounded-lg bg-gray-700/50 flex items-center justify-center mb-3 group-hover:bg-gray-700 transition-colors">
-        <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-      </div>
-      <p class="text-sm font-medium text-white">Buat Project</p>
-      <p class="text-xs text-gray-500 mt-0.5">Tambah website WordPress baru</p>
+    <a href="{% url 'bulk_new' %}" class="card" style="padding:1.25rem; text-decoration:none;">
+      <p style="font-size:0.875rem; font-weight:500; color:#fff;">Bulk Generate</p>
+      <p style="font-size:0.75rem; color:#6b7280; margin-top:0.25rem;">Banyak keyword sekaligus → auto-publish</p>
     </a>
-    <a href="{% url 'queue_list' %}" class="card p-5 hover:border-violet-500/50 transition-colors group">
-      <div class="w-9 h-9 rounded-lg bg-gray-700/50 flex items-center justify-center mb-3 group-hover:bg-gray-700 transition-colors">
-        <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10"/></svg>
-      </div>
-      <p class="text-sm font-medium text-white">Queue</p>
-      <p class="text-xs text-gray-500 mt-0.5">{{ pending }} pending · {{ processing }} berjalan</p>
+    <a href="{% url 'queue_list' %}" class="card" style="padding:1.25rem; text-decoration:none;">
+      <p style="font-size:0.875rem; font-weight:500; color:#fff;">Queue</p>
+      <p style="font-size:0.75rem; color:#6b7280; margin-top:0.25rem;">{{ pending }} pending · {{ processing }} berjalan</p>
     </a>
   </div>
+  {% endif %}
 
   <!-- Recent jobs -->
+  {% if recent_jobs %}
   <div class="card">
-    <div class="flex items-center justify-between px-5 py-3 border-b border-gray-800">
-      <h2 class="text-sm font-medium text-white">Job Terakhir</h2>
-      <a href="{% url 'queue_list' %}" class="text-xs text-violet-400 hover:text-violet-300">Lihat semua →</a>
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1.25rem; border-bottom:1px solid #1f2937;">
+      <h2 style="font-size:0.875rem; font-weight:600; color:#fff;">Job Terakhir</h2>
+      <a href="{% url 'queue_list' %}" style="font-size:0.75rem; color:#a78bfa; text-decoration:none;">Lihat semua →</a>
     </div>
-    {% if recent_jobs %}
-    <div class="divide-y divide-gray-800">
-      {% for job in recent_jobs %}
-      <div class="flex items-center gap-4 px-5 py-3">
-        <div class="flex-1 min-w-0">
-          <p class="text-sm text-white truncate">{{ job.keyword }}</p>
-          <p class="text-xs text-gray-500 mt-0.5">{{ job.project.name }} · {{ job.created_at|date:"d M Y H:i" }}</p>
-        </div>
-        <span class="badge-{{ job.status }}">{{ job.get_status_display }}</span>
+    {% for job in recent_jobs %}
+    <div style="display:flex; align-items:center; gap:1rem; padding:0.75rem 1.25rem; border-bottom:1px solid #111827;">
+      <div style="flex:1; min-width:0;">
+        <p style="font-size:0.875rem; color:#e5e7eb;">{{ job.keyword }}</p>
+        <p style="font-size:0.75rem; color:#6b7280; margin-top:0.125rem;">{{ job.project.name }} · {{ job.created_at|date:"d M Y H:i" }}</p>
       </div>
-      {% endfor %}
+      <span class="badge badge-{{ job.status }}">{{ job.get_status_display }}</span>
     </div>
-    {% else %}
-    <div class="px-5 py-10 text-center">
-      <p class="text-gray-600 text-sm">Belum ada job. Buat project dan masukkan keyword untuk memulai.</p>
-    </div>
-    {% endif %}
+    {% endfor %}
   </div>
+  {% endif %}
 
 </div>
 {% endblock %}

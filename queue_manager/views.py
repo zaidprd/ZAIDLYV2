@@ -74,18 +74,30 @@ def queue_status_poll(request, pk):
 
 @login_required
 def dashboard_summary(request):
+    from projects.models import Project, WordPressSite
+
     jobs = QueueJob.objects.filter(user=request.user)
-    # 'Published' = articles actually live on WordPress (publish-type jobs that finished).
-    # Generate-type 'PUBLISHED' just means the article is ready, not posted.
+    has_project = Project.objects.filter(user=request.user).exists()
+    has_site = WordPressSite.objects.filter(project__user=request.user).exists()
+    has_article = jobs.filter(job_type=QueueJob.TYPE_GENERATE, status=QueueJob.PUBLISHED).exists()
+
     context = {
         'user': request.user,
         'total_jobs': jobs.count(),
         'pending': jobs.filter(status=QueueJob.PENDING).count(),
         'processing': jobs.filter(status=QueueJob.PROCESSING).count(),
+        # Generate-done vs Publish-done so the count is honest (PRD: customer beli traffic, bukan jumlah job).
         'generated': jobs.filter(job_type=QueueJob.TYPE_GENERATE, status=QueueJob.PUBLISHED).count(),
         'published': jobs.filter(job_type=QueueJob.TYPE_PUBLISH, status=QueueJob.PUBLISHED).count(),
         'failed': jobs.filter(status=QueueJob.FAILED).count(),
         'projects_count': request.user.projects.count(),
         'recent_jobs': jobs[:5],
+        # Onboarding state: 3 langkah journey ke "live di Google" (Project -> WP site -> Artikel ranking-ready).
+        'onboarding_done': has_project and has_site and has_article,
+        'step_project_done': has_project,
+        'step_site_done': has_site,
+        'step_article_done': has_article,
+        'site_step_locked': not has_project,
+        'article_step_locked': not has_site,
     }
     return render(request, 'dashboard.html', context)

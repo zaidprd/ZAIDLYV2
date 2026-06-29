@@ -39,7 +39,11 @@
         <p style="font-size:0.75rem; color:#6b7280;">Auto-post artikel ke Threads setelah publish.</p>
       </div>
       {% if user.threads_user_id and user.threads_access_token %}
-        <span class="badge badge-success">Terhubung</span>
+        {% if user.threads_access_token == 'demo-threads-token' %}
+          <span class="badge" style="background:rgba(120,53,15,0.4); color:#fcd34d; border:1px solid rgba(120,53,15,0.6);">DEMO — tidak posting sungguhan</span>
+        {% else %}
+          <span class="badge badge-success">Terhubung</span>
+        {% endif %}
         <form method="post" action="{% url 'threads_disconnect' %}" style="margin-left:0.75rem;">
           {% csrf_token %}
           <button type="submit" class="btn btn-danger">Putuskan</button>

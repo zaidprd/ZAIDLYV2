@@ -13,7 +13,12 @@ from .prompt_builder import build_titles_messages
 @login_required
 def generate_new(request):
     projects = Project.objects.filter(user=request.user)
-    return render(request, 'generator/new.html', {'projects': projects})
+    # Customer butuh tahu SEBELUM klik kalau kredit tidak cukup -> kasih CTA top-up langsung.
+    return render(request, 'generator/new.html', {
+        'projects': projects,
+        'credits': request.user.credits,
+        'out_of_credits': request.user.credits < 1,
+    })
 
 
 @login_required

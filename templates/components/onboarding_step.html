@@ -1,0 +1,22 @@
+{# One step in the dashboard onboarding strip. done=True dims; locked=True disables CTA. #}
+<div style="display:flex; align-items:center; gap:1rem; padding:0.875rem 1rem; border-radius:0.5rem;
+            background:{% if done %}rgba(6,78,59,0.2){% elif locked %}#0f1218{% else %}#1f2937{% endif %};
+            border:1px solid {% if done %}rgba(6,78,59,0.4){% else %}#1f2937{% endif %};">
+  <div style="width:1.75rem; height:1.75rem; border-radius:9999px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+              background:{% if done %}#065f46{% else %}#0a0a0f{% endif %};
+              color:{% if done %}#6ee7b7{% else %}#a78bfa{% endif %};
+              font-size:0.8125rem; font-weight:600;">
+    {% if done %}✓{% else %}{{ num }}{% endif %}
+  </div>
+  <div style="flex:1; min-width:0;">
+    <p style="font-size:0.875rem; font-weight:500; color:{% if locked %}#6b7280{% else %}#fff{% endif %};">{{ title }}</p>
+    <p style="font-size:0.75rem; color:#9ca3af; margin-top:0.125rem;">{{ desc }}</p>
+  </div>
+  {% if done %}
+  <span style="font-size:0.75rem; color:#6ee7b7;">Selesai</span>
+  {% elif locked %}
+  <span style="font-size:0.75rem; color:#6b7280;">Terkunci</span>
+  {% else %}
+  <a href="{% url url_name %}" class="btn btn-primary" style="white-space:nowrap;">{{ cta }} →</a>
+  {% endif %}
+</div>
