@@ -8,6 +8,7 @@ from django_q.tasks import async_task
 
 from .analyzer import analyze_business
 from .discovery.pipeline import discover_keywords
+from .keyword_data import enrich_keywords
 from .intelligence import analyze_keywords
 from .planner import build_content_plan
 
@@ -46,6 +47,7 @@ def build_ai_campaign(project, *, name='', articles_per_day=3, limit=20, model=N
         analyze_business(project)                       # Batch 1
         step('discovering')
         discover_keywords(project, refresh=refresh)     # Batch 2 (cached)
+        enrich_keywords(project)                         # data provider (null today -> metrics None)
         analyze_keywords(project, model=model)          # Batch 3
         step('planning')
         items = build_content_plan(project, limit=limit, model=model)  # Batch 4
