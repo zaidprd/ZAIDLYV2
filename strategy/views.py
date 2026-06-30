@@ -11,6 +11,7 @@ from django.views.decorators.http import require_POST
 
 from projects.models import Project
 from .campaign import start_ai_campaign
+from .execution import start_campaign, run_campaign_tick
 from .models import Campaign
 
 
@@ -70,6 +71,25 @@ def campaign_detail(request, pk):
         'campaign': campaign,
         'items': items,
     })
+
+
+@login_required
+@require_POST
+def campaign_approve(request, pk):
+    """Approve content plan -> mulai daily drip.
+
+    start_campaign mendaftarkan Schedule DAILY ke django_q. Drip pertama dijalankan
+    langsung supaya customer melihat artikel mulai diproses, bukan menunggu besok.
+    """
+    campaign = get_object_or_404(Campaign, pk=pk, project__user=request.user)
+    if campaign.status != 'plan_ready':
+        messages.error(request, 'Campaign belum siap dijalankan. Tunggu plan selesai dibuat.')
+        return redirect('campaign_detail', pk=campaign.pk)
+
+    start_campaign(campaign)                  # status -> 'running' + register daily Schedule
+    run_campaign_tick(campaign)               # first drip immediately (menyenangkan customer)
+    messages.success(request, 'Campaign dimulai. Artikel pertama sedang diproses; sisanya menyusul setiap hari.')
+    return redirect('campaign_detail', pk=campaign.pk)
 
 
 @login_required

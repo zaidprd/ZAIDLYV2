@@ -64,6 +64,27 @@ class CampaignViewsTests(TestCase):
         self.assertEqual(poll.status_code, 200)
         self.assertContains(poll, 'campaign-status')
 
+    def test_approve_blocked_when_not_plan_ready(self):
+        project = _make_project(self.u, business_description='X', niche='x')
+        campaign = Campaign.objects.create(project=project, mode='ai', status='building')
+        with mock.patch('strategy.views.start_campaign') as starter, \
+             mock.patch('strategy.views.run_campaign_tick') as ticker:
+            resp = self.client.post(reverse('campaign_approve', args=[campaign.pk]), follow=True)
+        starter.assert_not_called()
+        ticker.assert_not_called()
+        self.assertContains(resp, 'belum siap')
+
+    def test_approve_starts_running_and_drips(self):
+        project = _make_project(self.u, business_description='X', niche='x')
+        campaign = Campaign.objects.create(project=project, mode='ai', status='plan_ready',
+                                            articles_per_day=3)
+        with mock.patch('strategy.views.start_campaign') as starter, \
+             mock.patch('strategy.views.run_campaign_tick') as ticker:
+            resp = self.client.post(reverse('campaign_approve', args=[campaign.pk]))
+        starter.assert_called_once_with(campaign)
+        ticker.assert_called_once_with(campaign)         # first drip immediately
+        self.assertRedirects(resp, reverse('campaign_detail', args=[campaign.pk]))
+
     def test_user_cannot_see_others_campaign(self):
         other = User.objects.create_user(username='o', password='pw12345678', email='o@o.com')
         project = _make_project(other, business_description='X', niche='x')
