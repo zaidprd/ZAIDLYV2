@@ -13,36 +13,79 @@
         {% if form.name.errors %}<p class="text-xs text-red-400 mt-1">{{ form.name.errors.0 }}</p>{% endif %}
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
-        <div class="form-group">
-          <label class="label">Bahasa</label>
-          <select name="language" class="input">
-            {% for val, label in form.fields.language.choices %}
-            <option value="{{ val }}" {% if form.language.value == val %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
+      <!-- BUSINESS PROFILE — input untuk AI Campaign (PRD §5).
+           Tanpa ini, Business Analyzer & Discovery tidak punya bahan baku.
+           Bagian inilah yang menentukan kualitas keyword & strategi nanti. -->
+      <div style="padding:1rem; background:rgba(124,58,237,0.08); border:1px solid rgba(124,58,237,0.3); border-radius:0.5rem; display:flex; flex-direction:column; gap:0.875rem;">
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-size:0.6875rem; font-weight:600; color:#c4b5fd; text-transform:uppercase; letter-spacing:0.06em;">Business Profile</span>
+          <span style="font-size:0.6875rem; color:#9ca3af;">— bahan baku AI Campaign</span>
         </div>
+
+        <div class="form-group">
+          <label class="label">Website URL</label>
+          {{ form.website_url }}
+          <p class="text-xs text-gray-600 mt-1">{{ form.fields.website_url.help_text }}</p>
+        </div>
+
+        <div class="form-group">
+          <label class="label">Deskripsi Bisnis</label>
+          {{ form.business_description }}
+          <p class="text-xs text-gray-600 mt-1">{{ form.fields.business_description.help_text }}</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="form-group">
+            <label class="label">Niche</label>
+            {{ form.niche }}
+            <p class="text-xs text-gray-600 mt-1">{{ form.fields.niche.help_text }}</p>
+          </div>
+          <div class="form-group">
+            <label class="label">Negara Target</label>
+            {{ form.target_country }}
+            <p class="text-xs text-gray-600 mt-1">{{ form.fields.target_country.help_text }}</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="form-group">
+            <label class="label">Bahasa</label>
+            <select name="language" class="input">
+              {% for val, label in form.fields.language.choices %}
+              <option value="{{ val }}" {% if form.language.value == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="label">Goal</label>
+            <select name="goal" class="input">
+              {% for val, label in form.fields.goal.choices %}
+              <option value="{{ val }}" {% if form.goal.value == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <p class="text-xs text-gray-600 mt-1">{{ form.fields.goal.help_text }}</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="label">Target Audience</label>
+          {{ form.target_audience }}
+        </div>
+
+        <div class="form-group">
+          <label class="label">Brand Voice</label>
+          {{ form.brand_voice }}
+          <p class="text-xs text-gray-600 mt-1">{{ form.fields.brand_voice.help_text }}</p>
+        </div>
+      </div>
+
+      <!-- CONTENT SETTINGS — preferensi tulisan (bisa di-override per artikel) -->
+      <div class="grid grid-cols-2 gap-4">
         <div class="form-group">
           <label class="label">Tone of Voice</label>
           <select name="tone" class="input">
             {% for val, label in form.fields.tone.choices %}
             <option value="{{ val }}" {% if form.tone.value == val %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="label">Target Audience</label>
-        {{ form.target_audience }}
-      </div>
-
-      <div class="grid grid-cols-2 gap-4">
-        <div class="form-group">
-          <label class="label">Writing Style</label>
-          <select name="writing_style" class="input">
-            {% for val, label in form.fields.writing_style.choices %}
-            <option value="{{ val }}" {% if form.writing_style.value|stringformat:'s' == val|stringformat:'s' %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
         </div>
@@ -57,9 +100,12 @@
       </div>
 
       <div class="form-group">
-        <label class="label">Brand Voice</label>
-        {{ form.brand_voice }}
-        <p class="text-xs text-gray-600 mt-1">{{ form.fields.brand_voice.help_text }}</p>
+        <label class="label">Writing Style</label>
+        <select name="writing_style" class="input">
+          {% for val, label in form.fields.writing_style.choices %}
+          <option value="{{ val }}" {% if form.writing_style.value|stringformat:'s' == val|stringformat:'s' %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
       </div>
 
       <div class="form-group">
