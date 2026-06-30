@@ -12,5 +12,6 @@ urlpatterns = [
     path('generate/', include('generator.urls')),
     path('', include('publisher.urls')),
     path('credits/', include('billing.urls')),
+    path('campaigns/', include('strategy.urls')),
     path('monitoring/', monitoring, name='monitoring'),
 ]

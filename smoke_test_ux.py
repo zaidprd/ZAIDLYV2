@@ -74,6 +74,7 @@ def main():
         ('Queue detail', 'queue_detail', [j_gen.pk], True),
         ('Credit history', 'credit_history', [], True),
         ('Package list', 'package_list', [], True),
+        ('Campaign list', 'campaign_list', [], True),
     ]
 
     findings = []

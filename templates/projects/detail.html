@@ -4,6 +4,36 @@
 {% block content %}
 <div class="max-w-3xl space-y-5">
 
+  <!-- AI Campaign CTA — PRD §31 entry point.
+       Aktif kalau Business Profile cukup (Analyzer butuh website/deskripsi + niche/audience).
+       Tanpa ini, customer harus pakai 'Generate manual' satu-satu = belum beda dari AI writer biasa. -->
+  {% with ready=project.business_description|add:project.website_url focus=project.niche|add:project.target_audience %}
+  {% if ready and focus %}
+  <div style="padding:1rem 1.25rem; background:rgba(124,58,237,0.12); border:1px solid rgba(124,58,237,0.4); border-radius:0.5rem; display:flex; align-items:center; justify-content:space-between; gap:1rem;">
+    <div>
+      <p style="font-size:0.875rem; font-weight:600; color:#fff;">Siap untuk AI Campaign</p>
+      <p style="font-size:0.75rem; color:#c4b5fd; margin-top:0.125rem;">AI menganalisa bisnismu → menemukan keyword nyata → menyusun content plan otomatis.</p>
+    </div>
+    <form method="post" action="{% url 'campaign_start_ai' project.pk %}" style="display:flex; align-items:center; gap:0.5rem; flex-shrink:0;">
+      {% csrf_token %}
+      <input type="number" name="articles_per_day" value="3" min="1" max="50"
+             title="Artikel per hari"
+             style="width:3.5rem; background:#0a0a0f; border:1px solid #374151; color:#e5e7eb; border-radius:0.375rem; padding:0.375rem 0.5rem; font-size:0.75rem; text-align:center;">
+      <span style="font-size:0.75rem; color:#9ca3af;">art/hari</span>
+      <button type="submit" class="btn btn-primary" style="white-space:nowrap;">Mulai AI Campaign →</button>
+    </form>
+  </div>
+  {% else %}
+  <div style="padding:0.875rem 1.25rem; background:rgba(120,53,15,0.25); border:1px solid rgba(120,53,15,0.5); border-radius:0.5rem; display:flex; align-items:center; justify-content:space-between; gap:1rem;">
+    <div>
+      <p style="font-size:0.8125rem; color:#fcd34d; font-weight:500;">Lengkapi Business Profile untuk AI Campaign</p>
+      <p style="font-size:0.6875rem; color:#9ca3af; margin-top:0.125rem;">Isi Website atau Deskripsi Bisnis, dan Niche atau Target Audience.</p>
+    </div>
+    <a href="{% url 'project_edit' project.pk %}" class="btn btn-secondary" style="white-space:nowrap;">Lengkapi →</a>
+  </div>
+  {% endif %}
+  {% endwith %}
+
   <!-- Project info -->
   <div class="card p-5">
     <div class="flex items-start justify-between">

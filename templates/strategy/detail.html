@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}{{ campaign.name|default:campaign.project.name }} — SEO.Zaidly{% endblock %}
+{% block page_title %}{{ campaign.name|default:campaign.project.name }}{% endblock %}
+{% block content %}
+<div class="max-w-4xl space-y-5">
+
+  <!-- Header campaign -->
+  <div class="card" style="padding:1rem 1.25rem; display:flex; align-items:start; justify-content:space-between; gap:1rem;">
+    <div style="flex:1; min-width:0;">
+      <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.25rem;">{{ campaign.project.name }} · {{ campaign.get_mode_display }}</p>
+      <p style="font-size:1rem; font-weight:600; color:#fff;">{{ campaign.name|default:"Campaign" }}</p>
+      <p style="font-size:0.75rem; color:#9ca3af; margin-top:0.25rem;">
+        {{ campaign.articles_per_day }} artikel/hari · negara {{ campaign.target_country }} · bahasa {{ campaign.language }}
+      </p>
+    </div>
+    <div style="text-align:right; flex-shrink:0;">
+      <span class="badge badge-{{ campaign.status }}">{{ campaign.get_status_display }}</span>
+      <p style="font-size:0.6875rem; color:#9ca3af; margin-top:0.375rem;">{{ campaign.created_at|date:"d M Y H:i" }}</p>
+    </div>
+  </div>
+
+  <!-- Status: progress strip + live polling saat building/running -->
+  {% include "strategy/_status_block.html" with campaign=campaign %}
+
+  <!-- Stats ringkas -->
+  <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:0.75rem;">
+    <div class="card" style="padding:0.875rem 1rem;">
+      <p style="font-size:0.6875rem; color:#6b7280; margin-bottom:0.25rem;">Rencana</p>
+      <p style="font-size:1.25rem; font-weight:700; color:#e5e7eb;">{{ campaign.planned_count }}</p>
+    </div>
+    <div class="card" style="padding:0.875rem 1rem;">
+      <p style="font-size:0.6875rem; color:#6b7280; margin-bottom:0.25rem;">Artikel selesai</p>
+      <p style="font-size:1.25rem; font-weight:700; color:#6ee7b7;">{{ campaign.generated_count }}</p>
+    </div>
+    <div class="card" style="padding:0.875rem 1rem;">
+      <p style="font-size:0.6875rem; color:#6b7280; margin-bottom:0.25rem;">Live di Google</p>
+      <p style="font-size:1.25rem; font-weight:700; color:#a78bfa;">{{ campaign.published_count }}</p>
+    </div>
+  </div>
+
+  <!-- Content plan (terlihat setelah plan_ready) -->
+  {% if items %}
+  <div class="card">
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1.25rem; border-bottom:1px solid #1f2937;">
+      <h2 style="font-size:0.875rem; font-weight:600; color:#fff;">Content Plan ({{ items|length }})</h2>
+      <p style="font-size:0.6875rem; color:#6b7280;">Diurut berdasarkan priority</p>
+    </div>
+    <div style="max-height:500px; overflow-y:auto;">
+      {% for item in items %}
+      <div style="display:flex; align-items:center; gap:1rem; padding:0.625rem 1.25rem; border-bottom:1px solid #111827;">
+        <div style="flex:1; min-width:0;">
+          <p style="font-size:0.8125rem; color:#e5e7eb;">{{ item.chosen_title }}</p>
+          <p style="font-size:0.6875rem; color:#6b7280; margin-top:0.125rem;">{{ item.keyword.keyword }}{% if item.cluster %} · {{ item.cluster.name }}{% endif %}</p>
+        </div>
+        <div style="text-align:right; flex-shrink:0; display:flex; align-items:center; gap:0.5rem;">
+          {% if item.queue_job %}
+          <a href="{% url 'generate_result' item.queue_job.pk %}" style="font-size:0.6875rem; color:#a78bfa;">Lihat →</a>
+          {% endif %}
+          <span class="badge" style="background:#1f2937; color:#9ca3af;">{{ item.get_status_display }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Tombol kembali -->
+  <div style="display:flex; gap:0.5rem;">
+    <a href="{% url 'campaign_list' %}" class="btn btn-secondary">← Semua Campaign</a>
+    <a href="{% url 'project_detail' campaign.project.pk %}" class="btn btn-secondary">Project</a>
+  </div>
+
+</div>
+{% endblock %}

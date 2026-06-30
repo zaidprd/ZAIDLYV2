@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Campaigns — SEO.Zaidly{% endblock %}
+{% block page_title %}Campaigns{% endblock %}
+{% block content %}
+<div class="max-w-4xl space-y-5">
+
+  <!-- Start AI Campaign — fokus utama halaman ini -->
+  <div class="card" style="padding:1.25rem 1.5rem;">
+    <div style="display:flex; align-items:start; justify-content:space-between; gap:1rem;">
+      <div>
+        <p style="font-size:0.9375rem; font-weight:600; color:#fff; margin-bottom:0.25rem;">Mulai AI Campaign</p>
+        <p style="font-size:0.8125rem; color:#9ca3af;">AI menganalisa bisnis → menemukan keyword → membuat strategi → menyusun content plan. Kamu hanya approve.</p>
+      </div>
+    </div>
+
+    {% if projects_ready %}
+    <div style="margin-top:1rem; display:flex; flex-direction:column; gap:0.5rem;">
+      {% for p in projects_ready %}
+      <form method="post" action="{% url 'campaign_start_ai' p.pk %}"
+            style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:#1f2937; border:1px solid #374151; border-radius:0.5rem;">
+        {% csrf_token %}
+        <div style="flex:1; min-width:0;">
+          <p style="font-size:0.875rem; color:#e5e7eb;">{{ p.name }}</p>
+          <p style="font-size:0.75rem; color:#9ca3af; margin-top:0.125rem;">{{ p.niche|default:p.business_description|truncatechars:80 }}</p>
+        </div>
+        <input type="number" name="articles_per_day" value="3" min="1" max="50"
+               title="Artikel per hari (drip)"
+               style="width:4rem; background:#0a0a0f; border:1px solid #374151; color:#e5e7eb; border-radius:0.375rem; padding:0.375rem 0.5rem; font-size:0.75rem; text-align:center;">
+        <span style="font-size:0.75rem; color:#6b7280;">art/hari</span>
+        <button type="submit" class="btn btn-primary" style="white-space:nowrap;">Generate Strategy →</button>
+      </form>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="margin-top:1rem; padding:0.875rem 1rem; background:rgba(120,53,15,0.25); border:1px solid rgba(120,53,15,0.5); border-radius:0.5rem; font-size:0.8125rem; color:#fcd34d;">
+      Belum ada project dengan Business Profile lengkap. Buka project lalu isi <strong>Website</strong> / <strong>Deskripsi Bisnis</strong> dan <strong>Niche</strong> / <strong>Target Audience</strong>.
+      <a href="{% url 'project_list' %}" style="color:#fbbf24; font-weight:500; margin-left:0.5rem;">Buka projects →</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Riwayat campaign -->
+  <div class="card">
+    <div style="padding:0.75rem 1.25rem; border-bottom:1px solid #1f2937;">
+      <h2 style="font-size:0.875rem; font-weight:600; color:#fff;">Riwayat Campaign</h2>
+    </div>
+    {% if campaigns %}
+    {% for c in campaigns %}
+    <a href="{% url 'campaign_detail' c.pk %}"
+       style="display:flex; align-items:center; gap:1rem; padding:0.75rem 1.25rem; border-bottom:1px solid #111827; text-decoration:none;">
+      <div style="flex:1; min-width:0;">
+        <p style="font-size:0.875rem; color:#e5e7eb;">{{ c.name|default:c.project.name }}</p>
+        <p style="font-size:0.75rem; color:#6b7280; margin-top:0.125rem;">
+          {{ c.project.name }} · {{ c.get_mode_display }} · {{ c.created_at|date:"d M Y H:i" }}
+        </p>
+      </div>
+      <div style="text-align:right; flex-shrink:0;">
+        <span class="badge badge-{{ c.status }}">{{ c.get_status_display }}</span>
+        <p style="font-size:0.6875rem; color:#9ca3af; margin-top:0.25rem;">
+          {{ c.generated_count }}/{{ c.planned_count }} selesai · {{ c.published_count }} live
+        </p>
+      </div>
+    </a>
+    {% endfor %}
+    {% else %}
+    <div style="padding:2.5rem; text-align:center; color:#6b7280; font-size:0.875rem;">
+      Belum ada campaign. Mulai yang pertama di atas.
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
