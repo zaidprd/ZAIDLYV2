@@ -10,7 +10,7 @@ single source of truth shared with the parser in the generator task.
 """
 from dataclasses import dataclass, field
 
-PROMPT_VERSION = "article_v2"
+PROMPT_VERSION = "article_v3"
 
 # Ordered output sections. The parser splits the model output on `<<<NAME>>>`.
 OUTPUT_SECTIONS = [
@@ -50,9 +50,11 @@ class ArticleSpec:
     tone: str = "informative"
     writing_style: str = "blog"
     target_audience: str = ""
+    goal: str = ""                  # tujuan artikel: inform / convert / rank / educate ...
     brand_voice: str = ""
     length: int = 1500
     cta: str = ""
+    image_style: str = ""           # steer the featured-image prompt
     faq: bool = True
     internal_links: list = field(default_factory=list)
     external_links: list = field(default_factory=list)
@@ -71,9 +73,9 @@ class ArticleSpec:
 
 def article_spec_from_project(project, *, keyword, title="", secondary_keywords=None,
                               lsi_keywords=None, length=None, writing_style=None,
-                              cta=None, faq=True, internal_links=None,
-                              external_links=None, schema=True, ai_overview=True,
-                              yoast=True):
+                              goal=None, cta=None, image_style=None, faq=True,
+                              internal_links=None, external_links=None, schema=True,
+                              ai_overview=True, yoast=True):
     """Build an ArticleSpec from a Project + per-generation overrides."""
     return ArticleSpec(
         keyword=keyword,
@@ -84,9 +86,11 @@ def article_spec_from_project(project, *, keyword, title="", secondary_keywords=
         tone=project.get_tone_display(),
         writing_style=writing_style or project.writing_style,
         target_audience=project.target_audience or "pembaca umum",
+        goal=goal or "",
         brand_voice=project.brand_voice,
         length=length or project.default_length,
         cta=cta if cta is not None else project.default_cta,
+        image_style=image_style or "",
         faq=faq,
         internal_links=internal_links or [],
         external_links=external_links or [],
@@ -101,6 +105,7 @@ def _join(label, items):
 
 
 def _seo_rules(spec):
+    """Yoast / keyword placement rules."""
     rules = [
         f"- Keyword utama '{spec.keyword}' WAJIB muncul di: meta title, meta description, slug, "
         "kalimat pertama paragraf pembuka, minimal satu subjudul <h2>, dan alt text gambar.",
@@ -113,16 +118,49 @@ def _seo_rules(spec):
     if spec.yoast:
         rules += [
             "- Meta title ≤ 60 karakter; meta description ≤ 155 karakter dengan ajakan membaca.",
-            "- Readability: paragraf pendek (2-4 kalimat), kalimat ringkas, gunakan transition words, "
-            "distribusikan subjudul merata.",
-        ]
-    if spec.ai_overview:
-        rules += [
-            "- Optimasi Google AI Overview: beri jawaban langsung & ringkas di dekat awal "
-            "(answer-first / poin kunci), pakai subjudul berbasis pertanyaan, dan lengkapi cakupan entitas/sub-topik.",
-            "- Manfaatkan <ul>/<ol>/<table> untuk informasi yang cocok disajikan terstruktur.",
+            "- Readability ala Yoast: paragraf pendek (2-4 kalimat), mayoritas kalimat < 20 kata, "
+            "gunakan transition words, dan beri subjudul tiap ~300 kata.",
         ]
     return "\n".join(rules)
+
+
+def _ai_overview_rules(spec):
+    """Google AI Overview optimisation — gated so it disappears when toggled off."""
+    if not spec.ai_overview:
+        return ""
+    return (
+        "OPTIMASI GOOGLE AI OVERVIEW:\n"
+        "- Beri jawaban langsung & ringkas (2-3 kalimat) tepat di bawah subjudul kunci sebelum penjelasan panjang (answer-first).\n"
+        "- Gunakan subjudul berbentuk pertanyaan pada bagian yang relevan.\n"
+        "- Sajikan fakta terstruktur dengan <ul>/<ol>/<table> agar mudah dikutip mesin.\n"
+        "- Lengkapi cakupan entitas & sub-topik turunan agar dianggap sumber paling komprehensif."
+    )
+
+
+def _quality_rules(spec):
+    """Premium quality bar — the product's real differentiator.
+
+    Deliberately free of the words 'FAQ' and 'AI Overview' so it stays visible
+    even when those toggles are off.
+    """
+    return (
+        "STANDAR KUALITAS (WAJIB — ini pembeda produk):\n"
+        "EEAT:\n"
+        "- Tunjukkan keahlian nyata: detail spesifik, angka, contoh konkret, langkah praktis — bukan generalisasi.\n"
+        "- Akurasi faktual: JANGAN mengarang statistik, kutipan, tanggal, atau nama sumber. Bila tak pasti, pakai bahasa hati-hati.\n"
+        "- Jelaskan 'mengapa' di balik klaim (alasan/mekanisme), bukan hanya 'apa'.\n"
+        "- Seimbang & jujur: sebut trade-off/keterbatasan bila relevan; hindari hype berlebihan.\n"
+        "SEMANTIC SEO:\n"
+        "- Cakupan menyeluruh: bahas entitas, sinonim, dan sub-pertanyaan terkait secara natural, bukan sekadar keyword.\n"
+        "- Tiap bagian menambah informasi BARU dan saling terhubung agar terasa utuh & mendalam.\n"
+        "KUALITAS MANUSIA & ANTI-REPETISI:\n"
+        "- Tulis seperti pakar manusia berpengalaman. Variasikan panjang & struktur kalimat; pakai kalimat aktif & langsung.\n"
+        "- DILARANG frasa klise AI: 'di era digital ini', 'tidak dapat dipungkiri', 'penting untuk dicatat', "
+        "'mari kita selami', 'dalam dunia yang serba cepat', 'membuka potensi', 'sebagai kesimpulan'.\n"
+        "- DILARANG mengulang gagasan, kalimat, atau pola pembuka paragraf yang mirip. Setiap paragraf unik, tanpa kalimat pengisi.\n"
+        "HEADING:\n"
+        "- Heading deskriptif & spesifik (bukan satu kata), hierarki H2>H3 rapi & paralel, keyword natural (tidak dijejalkan)."
+    )
 
 
 def _link_rules(spec):
@@ -155,15 +193,43 @@ def _output_contract(spec):
     )
 
 
-def build_article_messages(spec: ArticleSpec):
-    """Assemble the chat messages for one SEO article generation."""
+def _research_block(brief):
+    """Inject SERP research so the article is written FROM data, not from memory.
+
+    Returns '' for an empty/stub brief, keeping behaviour identical until real
+    SERP grounding is wired in.
+    """
+    if brief is None or not getattr(brief, "is_grounded", False):
+        return ""
+    parts = ["RISET SERP (dasar penulisan — kalahkan pesaing dengan kelengkapan):"]
+    if brief.subtopics_required:
+        parts.append("- Sub-topik yang WAJIB dibahas: " + "; ".join(brief.subtopics_required))
+    if brief.entities:
+        parts.append("- Entity yang harus disebut: " + ", ".join(brief.entities))
+    if brief.paa:
+        parts.append("- Jawab pertanyaan People Also Ask ini: " + " | ".join(brief.paa))
+    if brief.semantic_keywords:
+        parts.append("- Sisipkan secara natural semantic keyword: " + ", ".join(brief.semantic_keywords))
+    if brief.median_word_count:
+        parts.append(f"- Panjang pesaing rata-rata ~{brief.median_word_count} kata; lampaui kelengkapannya.")
+    return "\n".join(parts)
+
+
+def build_article_messages(spec: ArticleSpec, brief=None):
+    """Assemble the chat messages for one SEO article generation.
+
+    `brief` (research.brief.ContentBrief) grounds the article in SERP findings
+    when present; omitted/empty -> classic behaviour.
+    """
     skeleton = STYLE_SKELETONS.get(spec.writing_style, STYLE_SKELETONS["blog"])
 
     system_parts = [
-        f"Kamu adalah SEO content strategist & penulis profesional. Tulis artikel SEO BERKUALITAS "
-        f"(bukan sekadar artikel AI) dalam {spec.lang_name}.",
+        f"Kamu adalah SEO content strategist & penulis senior kelas dunia. Tulis artikel SEO PREMIUM "
+        f"berkualitas manusia (tak terbedakan dari tulisan pakar) dalam {spec.lang_name} — bukan sekadar artikel AI.",
         f"Tone: {spec.tone}. Target pembaca: {spec.target_audience or 'pembaca umum'}.",
     ]
+    if spec.goal:
+        system_parts.append(f"Tujuan artikel: {spec.goal}. Selaraskan sudut pandang, kedalaman, dan CTA dengan tujuan ini.")
     if spec.brand_voice:
         system_parts.append(f"Brand voice: {spec.brand_voice}.")
 
@@ -177,20 +243,32 @@ def build_article_messages(spec: ArticleSpec):
     if lsi:
         system_parts.append(lsi)
 
+    research = _research_block(brief)
+    if research:
+        system_parts.append(research)
+
     system_parts.append("ATURAN SEO:\n" + _seo_rules(spec))
+    ai_overview = _ai_overview_rules(spec)
+    if ai_overview:
+        system_parts.append(ai_overview)
+    system_parts.append(_quality_rules(spec))
     system_parts.append("ATURAN LINK:\n" + _link_rules(spec))
 
     if spec.faq:
-        system_parts.append("Sertakan bagian FAQ (3-5 pertanyaan) dengan subjudul <h2>FAQ</h2> dan pertanyaan <h3>.")
+        system_parts.append("Sertakan bagian FAQ (3-5 pertanyaan unik yang benar-benar ditanyakan pembaca) "
+                            "dengan subjudul <h2>FAQ</h2> dan tiap pertanyaan sebagai <h3>; jawaban ringkas & langsung.")
     if spec.cta:
-        system_parts.append(f"Akhiri dengan call-to-action: {spec.cta}")
+        system_parts.append(f"Akhiri dengan call-to-action yang halus & relevan: {spec.cta}")
+
+    img_dir = spec.image_style or "gaya editorial modern, realistis, relevan dengan topik"
+    system_parts.append(f"Arahan featured image: {img_dir}. Prompt gambar harus deskriptif & spesifik, tanpa teks di gambar.")
 
     system_parts.append(_output_contract(spec))
 
     user = f"Keyword utama: {spec.keyword}"
     if spec.title:
         user += f"\nJudul: {spec.title}"
-    user += "\n\nTulis artikel lengkap sekarang dalam format output yang diminta."
+    user += "\n\nTulis artikel lengkap sekarang dalam format output yang diminta. Patuhi STANDAR KUALITAS di atas."
 
     return [
         {"role": "system", "content": "\n\n".join(system_parts)},
@@ -202,8 +280,8 @@ def build_revision_messages(spec: ArticleSpec, previous_output: str, failures):
     """Ask the model to FIX specific SEO issues, re-emitting the full output block."""
     issues = "\n".join(f"- {f}" for f in failures)
     system = (
-        "Kamu adalah SEO editor. Perbaiki artikel berikut agar lolos standar SEO. "
-        "Pertahankan kualitas & gaya, jangan kurangi panjang. "
+        "Kamu adalah SEO editor senior. Perbaiki artikel berikut agar lolos standar SEO TANPA menurunkan kualitas. "
+        "Pertahankan gaya manusia & EEAT; jangan menambah repetisi atau frasa klise AI; jangan kurangi panjang. "
         "Keluarkan ULANG seluruh blok output dengan format penanda yang SAMA PERSIS "
         "(<<<META_TITLE>>> ... <<<END>>>), tanpa teks lain."
     )

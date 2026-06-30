@@ -20,9 +20,10 @@
     </div>
   </div>
 
-  <!-- Credit info -->
-  <div style="padding:0.875rem 1rem; background:#1f2937; border-radius:0.5rem; font-size:0.8125rem; color:#9ca3af;">
-    1 kredit = 1 artikel. Kredit tidak kedaluwarsa.
+  <!-- Credit info + Top-up CTA -->
+  <div style="display:flex; align-items:center; justify-content:space-between; padding:0.875rem 1rem; background:#1f2937; border-radius:0.5rem; gap:1rem;">
+    <span style="font-size:0.8125rem; color:#9ca3af;">1 kredit = 1 artikel. Kredit tidak kedaluwarsa.</span>
+    <a href="{% url 'package_list' %}" class="btn btn-primary">Beli Kredit</a>
   </div>
 
   <!-- HPP / biaya produksi (PRD §8) -->
@@ -51,6 +52,14 @@
     <div style="padding:0 1.25rem 1rem; font-size:0.75rem; color:#6b7280;">
       Rata-rata {{ hpp.avg_tokens_in }} token masuk / {{ hpp.avg_tokens_out }} token keluar · {{ hpp.avg_duration_s }}s per artikel.
     </div>
+    {% if credit_price_usd %}
+    <div style="padding:0.75rem 1.25rem; border-top:1px solid #1f2937; display:flex; justify-content:space-between; gap:1rem; font-size:0.8125rem;">
+      <span style="color:#9ca3af;">Harga jual / kredit: <span style="color:#e5e7eb;">${{ credit_price_usd }}</span></span>
+      {% if hpp.margin_pct is not None %}
+      <span style="color:#9ca3af;">Margin: <span style="color:{% if hpp.margin_pct >= 50 %}#6ee7b7{% else %}#fcd34d{% endif %}; font-weight:600;">{{ hpp.margin_pct }}%</span></span>
+      {% endif %}
+    </div>
+    {% endif %}
   </div>
 
   <!-- Transaction history -->

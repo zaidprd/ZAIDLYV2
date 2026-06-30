@@ -4,6 +4,17 @@
 {% block content %}
 <div class="max-w-3xl space-y-5">
 
+  <!-- Progres menuju ranking di Google -->
+  {% if job.status == 'pending' %}
+    {% include "components/ranking_progress.html" with phase="research" %}
+  {% elif job.status == 'processing' %}
+    {% include "components/ranking_progress.html" with phase="writing" %}
+  {% elif job.status == 'published' and not job.result.wp_post_url %}
+    {% include "components/ranking_progress.html" with phase="seo" %}
+  {% elif job.result.wp_post_url %}
+    {% include "components/ranking_progress.html" with phase="live" %}
+  {% endif %}
+
   <!-- Header job info -->
   <div class="card p-5">
     <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:1rem;">
@@ -101,9 +112,17 @@
   <!-- Featured image -->
   {% if job.result.image_url %}
   <div class="card p-4">
-    <p style="font-size:0.75rem; color:#6b7280; margin-bottom:0.75rem;">Featured Image</p>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+      <p style="font-size:0.75rem; color:#6b7280;">Featured Image</p>
+      {% if "placehold.co" in job.result.image_url %}
+      <span class="badge" style="background:rgba(120,53,15,0.4); color:#fcd34d; border:1px solid rgba(120,53,15,0.6);">DEMO — bukan gambar AI sungguhan</span>
+      {% endif %}
+    </div>
     <img src="{{ job.result.image_url }}" alt="{{ job.title }}"
          style="width:100%; border-radius:0.5rem; max-height:300px; object-fit:cover;">
+    {% if "placehold.co" in job.result.image_url %}
+    <p style="font-size:0.75rem; color:#9ca3af; margin-top:0.5rem;">Atur <code style="color:#a78bfa;">AI_IMAGE_MODEL</code> untuk generate featured image dengan AI.</p>
+    {% endif %}
   </div>
   {% endif %}
 

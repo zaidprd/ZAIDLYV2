@@ -60,6 +60,34 @@ class ArticleMessagesTests(SimpleTestCase):
         sys = _system(build_article_messages(self._spec(length=5000)))
         self.assertIn("5000+ kata", sys)
 
+    def test_premium_quality_directives_present(self):
+        sys = _system(build_article_messages(self._spec()))
+        self.assertIn("STANDAR KUALITAS", sys)
+        self.assertIn("EEAT", sys)
+        self.assertIn("SEMANTIC SEO", sys)
+        self.assertIn("ANTI-REPETISI", sys)
+        self.assertIn("di era digital ini", sys)        # banned-cliché list is present
+        self.assertIn("HEADING", sys)
+
+    def test_quality_bar_survives_all_toggles_off(self):
+        # Premium quality must NOT depend on FAQ/AI-Overview/schema toggles.
+        sys = _system(build_article_messages(self._spec(faq=False, schema=False, ai_overview=False)))
+        self.assertIn("STANDAR KUALITAS", sys)
+        self.assertIn("EEAT", sys)
+
+    def test_goal_directive(self):
+        sys = _system(build_article_messages(self._spec(goal="mendorong pembaca mendaftar")))
+        self.assertIn("Tujuan artikel: mendorong pembaca mendaftar", sys)
+
+    def test_ai_overview_block_when_enabled(self):
+        sys = _system(build_article_messages(self._spec(ai_overview=True)))
+        self.assertIn("GOOGLE AI OVERVIEW", sys)
+        self.assertIn("answer-first", sys)
+
+    def test_image_style_steers_prompt(self):
+        sys = _system(build_article_messages(self._spec(image_style="flat illustration biru")))
+        self.assertIn("flat illustration biru", sys)
+
 
 class SpecFromProjectTests(SimpleTestCase):
     def test_bridges_project_defaults_and_overrides(self):

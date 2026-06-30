@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Profil — SEO.Zaidly{% endblock %}
+{% block page_title %}Profil{% endblock %}
+{% block content %}
+<div class="max-w-2xl space-y-5">
+
+  <div class="card">
+    <div style="padding:0.75rem 1.25rem; border-bottom:1px solid #1f2937;">
+      <h2 style="font-size:0.875rem; font-weight:600; color:#fff;">Akun</h2>
+    </div>
+    <div style="padding:1.25rem; display:flex; flex-direction:column; gap:0.875rem;">
+      <div style="display:flex; justify-content:space-between;">
+        <span style="font-size:0.8125rem; color:#9ca3af;">Email</span>
+        <span style="font-size:0.8125rem; color:#e5e7eb;">{{ user.email }}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between;">
+        <span style="font-size:0.8125rem; color:#9ca3af;">Nama</span>
+        <span style="font-size:0.8125rem; color:#e5e7eb;">{{ user.display_name }}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between;">
+        <span style="font-size:0.8125rem; color:#9ca3af;">Paket</span>
+        <span style="font-size:0.8125rem; color:#e5e7eb;">{{ user.plan }}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between;">
+        <span style="font-size:0.8125rem; color:#9ca3af;">Kredit tersedia</span>
+        <span style="font-size:0.8125rem; color:#a78bfa; font-weight:600;">{{ user.credits }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Integrasi -->
+  <div class="card">
+    <div style="padding:0.75rem 1.25rem; border-bottom:1px solid #1f2937;">
+      <h2 style="font-size:0.875rem; font-weight:600; color:#fff;">Integrasi</h2>
+    </div>
+    <div style="padding:1.25rem; display:flex; align-items:center; justify-content:space-between;">
+      <div>
+        <p style="font-size:0.875rem; color:#e5e7eb;">Threads</p>
+        <p style="font-size:0.75rem; color:#6b7280;">Auto-post artikel ke Threads setelah publish.</p>
+      </div>
+      {% if user.threads_user_id and user.threads_access_token %}
+        {% if user.threads_access_token == 'demo-threads-token' %}
+          <span class="badge" style="background:rgba(120,53,15,0.4); color:#fcd34d; border:1px solid rgba(120,53,15,0.6);">DEMO — tidak posting sungguhan</span>
+        {% else %}
+          <span class="badge badge-success">Terhubung</span>
+        {% endif %}
+        <form method="post" action="{% url 'threads_disconnect' %}" style="margin-left:0.75rem;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Putuskan</button>
+        </form>
+      {% else %}
+        <a href="{% url 'threads_connect' %}" class="btn btn-primary">Hubungkan</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div>
+    <a href="{% url 'credit_history' %}" class="btn btn-secondary">Kelola Kredit</a>
+  </div>
+
+</div>
+{% endblock %}
